@@ -30,6 +30,10 @@ export default function Cursor() {
       y.set(e.clientY);
       setHidden(false);
       const t = e.target as Element | null;
+      if (t?.closest?.("input, select, textarea, option")) {
+        setHidden(true);
+        return;
+      }
       if (t?.closest?.('[data-cursor="view"]') && !t.closest("a,button")) setMode("view");
       else if (t?.closest?.("a,button,summary,[role=tab],label")) setMode("link");
       else setMode("default");

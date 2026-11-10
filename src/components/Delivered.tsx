@@ -16,26 +16,36 @@ const handedOver = Number(TRACK_RECORD.find((t) => /handed/i.test(t.label))?.val
 export default function Delivered() {
   const sectionRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
+  const stickyRef = useRef<HTMLDivElement>(null);
   const distance = useRef(0);
   const [height, setHeight] = useState<string>("300vh");
   const reduce = useReducedMotionSafe();
 
   useEffect(() => {
     if (reduce) return;
+    // Measure the pinned box itself (it uses svh, which ignores the phone
+    // address bar), so the section height never jumps while scrolling.
+    let lastWidth = -1;
     const measure = () => {
       const track = trackRef.current;
-      if (!track) return;
-      distance.current = Math.max(0, track.scrollWidth - window.innerWidth);
-      // Cap the viewport height used, matching the CSS cap on .gallery__sticky.
-      setHeight(`${Math.round(distance.current + Math.min(window.innerHeight, 1600))}px`);
+      const sticky = stickyRef.current;
+      if (!track || !sticky) return;
+      distance.current = Math.max(0, track.scrollWidth - sticky.clientWidth);
+      setHeight(`${Math.round(distance.current + sticky.clientHeight)}px`);
     };
-    measure();
+    const onResize = () => {
+      // Phones fire resize when the address bar slides; only width matters here.
+      if (window.innerWidth === lastWidth) return;
+      lastWidth = window.innerWidth;
+      measure();
+    };
+    onResize();
     const ro = new ResizeObserver(measure);
     if (trackRef.current) ro.observe(trackRef.current);
-    window.addEventListener("resize", measure);
+    window.addEventListener("resize", onResize);
     return () => {
       ro.disconnect();
-      window.removeEventListener("resize", measure);
+      window.removeEventListener("resize", onResize);
     };
   }, [reduce]);
 
@@ -94,7 +104,7 @@ export default function Delivered() {
 
   return (
     <section ref={sectionRef} className="gallery" style={{ height }} aria-labelledby="delivered-heading">
-      <div className="gallery__sticky">
+      <div className="gallery__sticky" ref={stickyRef}>
         <motion.div ref={trackRef} className="gallery__track" style={{ x }}>
           {cards}
         </motion.div>

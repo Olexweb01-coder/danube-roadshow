@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 /** Fired when the opening curtain has lifted (or was skipped). */
 export const INTRO_DONE = "danube:intro-done";
+/** Total length of the opening curtain on a first visit. */
 export const INTRO_MS = 1900;
 
 /** True once the intro is out of the way. Falls back to true after 3.2s no matter what. */

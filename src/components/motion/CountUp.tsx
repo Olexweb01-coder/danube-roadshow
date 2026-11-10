@@ -13,10 +13,24 @@ export default function CountUp({ value }: { value: string }) {
   // Years don't count; only small figures do.
   const counts = !Number.isNaN(target) && target < 1000;
   const [shown, setShown] = useState(value);
+  const armed = useRef(false);
+
+  // Once running in the browser, rest at zero until seen, so the number never
+  // flashes its final value and then snaps back to zero. Without scripts the
+  // real figure stays.
+  useEffect(() => {
+    if (!counts || armed.current) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const r = ref.current?.getBoundingClientRect();
+    const onScreen = r ? r.top < window.innerHeight && r.bottom > 0 : false;
+    if (!onScreen) {
+      armed.current = true;
+      setShown(`0${suffix}`);
+    }
+  }, [counts, suffix]);
 
   useEffect(() => {
-    if (!counts || !inView) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!counts || !inView || !armed.current) return;
     const controls = animate(0, target, {
       duration: 1.8,
       ease: [0.16, 1, 0.3, 1],

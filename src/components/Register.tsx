@@ -126,7 +126,7 @@ export default function Register() {
   const [screen, setScreen] = useState<Screen>("seat");
   const formRef = useRef<HTMLFormElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const firstRender = useRef(true);
+  const lastView = useRef<string | null>(null);
 
   // Resume an earlier visit: someone who registered but never joined the
   // community lands back on the community step.
@@ -138,12 +138,14 @@ export default function Register() {
     }
   }, []);
 
+  // Move focus to the new step's heading only when the step really changes,
+  // never on page load (effects can run twice in development).
   useEffect(() => {
-    if (firstRender.current) {
-      firstRender.current = false;
-      return;
+    const view = `${step}:${screen}`;
+    if (lastView.current !== null && lastView.current !== view) {
+      headingRef.current?.focus({ preventScroll: true });
     }
-    headingRef.current?.focus({ preventScroll: true });
+    lastView.current = view;
   }, [step, screen]);
 
   const clearError = (key: keyof RegistrationInput) => () => {

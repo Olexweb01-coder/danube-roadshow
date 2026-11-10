@@ -1896,7 +1896,15 @@ select.field__control option {
   display: grid;
   place-items: center;
   background: var(--midnight);
+}
+/* Without the app (no scripts, or it failed), lift on a timer. */
+html:not(.js) .intro {
   animation: intro-lift 0.75s cubic-bezier(0.77, 0, 0.18, 1) 1.45s both;
+}
+/* With the app, the curtain waits until it's ready, then lifts straight
+   into the hero animation, so there's never an empty hero in between. */
+.intro.intro--lift {
+  animation: intro-lift 0.75s cubic-bezier(0.77, 0, 0.18, 1) 0s both;
 }
 .intro__inner {
   display: grid;
@@ -2644,5 +2652,12 @@ html:not(.js) .scroll-cue-wrap {
 @media (max-height: 520px) {
   .panel__shade {
     background: linear-gradient(90deg, rgba(6, 18, 48, 0.9) 0%, rgba(6, 18, 48, 0.62) 50%, rgba(6, 18, 48, 0.12) 100%);
+  }
+}
+
+/* 5. Phones: lift the gallery's progress line and credit above the bottom bar */
+@media (max-width: 760px) {
+  .gallery__foot {
+    bottom: calc(80px + env(safe-area-inset-bottom, 0px));
   }
 }

@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { motion, useInView, useMotionValueEvent, useScroll, useTransform, type MotionValue, type Variants } from "framer-motion";
-import { useRef, useState } from "react";
+import { motion, useMotionValueEvent, useScroll, useTransform, type MotionValue, type Variants } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 import { PROPERTIES, type Property } from "@/config/properties";
 import { usd, whatsappLink } from "@/config/event";
 import { useReducedMotionSafe } from "@/lib/useReducedMotionSafe";
@@ -30,11 +30,11 @@ const LAST = PROPERTIES.length - 1;
 const EASE = [0.22, 1, 0.36, 1] as const;
 const cascade: Variants = {
   hide: { transition: { staggerChildren: 0.03, staggerDirection: -1 } },
-  show: { transition: { staggerChildren: 0.09, delayChildren: 0.25 } },
+  show: { transition: { staggerChildren: 0.07, delayChildren: 0.08 } },
 };
 const rise: Variants = {
   hide: { opacity: 0, y: 36, transition: { duration: 0.4, ease: EASE } },
-  show: { opacity: 1, y: 0, transition: { duration: 1, ease: EASE } },
+  show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: EASE } },
 };
 const maskRise: Variants = {
   hide: { y: "105%", transition: { duration: 0.4, ease: EASE } },
@@ -201,7 +201,15 @@ export default function Projects() {
   const [active, setActive] = useState(0);
 
   const { scrollYProgress } = useScroll({ target: trackRef, offset: ["start start", "end end"] });
-  const inView = useInView(trackRef, { margin: "-35% 0px -35% 0px" });
+  // "On screen" comes from the same scroll signal as the active panel, so the
+  // two can never disagree (a separate observer could lag under load).
+  const { scrollYProgress: band } = useScroll({ target: trackRef, offset: ["start 0.65", "end 0.35"] });
+  const [inView, setInView] = useState(false);
+  useMotionValueEvent(band, "change", (v) => setInView(v > 0 && v < 1));
+  useEffect(() => {
+    const v = band.get();
+    setInView(v > 0 && v < 1);
+  }, [band]);
 
   useMotionValueEvent(scrollYProgress, "change", (v) => {
     const i = activeAt(v);
