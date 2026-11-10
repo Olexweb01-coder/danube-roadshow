@@ -25,7 +25,7 @@ export default function Nav() {
           <a className="nav__link" href="#event">Programme</a>
           <a className="nav__link" href="#faq">FAQ</a>
           <Countdown />
-          <a className="btn btn--solid" href="#register">Reserve my seat</a>
+          <a className="btn btn--solid" href="#register" data-magnetic>Reserve my seat</a>
         </nav>
       </div>
     </header>

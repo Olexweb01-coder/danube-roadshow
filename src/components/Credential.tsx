@@ -7,7 +7,15 @@ export default function Credential() {
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/media/logo.png" alt="" width={373} height={20} aria-hidden="true" />
       <span>
-        Presented by <strong>{BROKER.name}</strong>, a registered Danube Properties broker
+        {BROKER.name ? (
+          <>
+            Presented by <strong>{BROKER.name}</strong>, a registered Danube Properties broker
+          </>
+        ) : (
+          <>
+            Presented by a <strong>registered Danube Properties broker</strong>
+          </>
+        )}
         {BROKER.registration ? <>, registration no. {BROKER.registration}</> : null}
       </span>
     </p>

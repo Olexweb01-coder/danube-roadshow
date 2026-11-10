@@ -5,6 +5,7 @@ import { useRef } from "react";
 import { useReducedMotionSafe } from "@/lib/useReducedMotionSafe";
 import { TRACK_RECORD } from "@/config/proof";
 import { usd } from "@/config/event";
+import CountUp from "./motion/CountUp";
 
 const REFRAME = "Don’t wire millions on trust. Meet the developer first.";
 
@@ -51,13 +52,13 @@ export default function Statement() {
   const words = REFRAME.split(" ");
 
   return (
-    <section className="statement" aria-labelledby="reframe-heading">
+    <section className="statement" id="reframe" aria-labelledby="reframe-heading">
       <div className="container">
         <p className="eyebrow">Building Dubai since 1993</p>
         <ul className="facts facts--top" role="list">
           {TRACK_RECORD.map((f) => (
             <li key={f.label} className="facts__item">
-              <span className="facts__value">{f.value}</span>
+              <CountUp value={f.value} />
               <span className="facts__label">{f.label}</span>
             </li>
           ))}
@@ -79,10 +80,18 @@ export default function Statement() {
 
         <ul className="benefits" role="list">
           {BENEFITS.map((b) => (
-            <li key={b.title} className="benefits__item">
+            <motion.li
+              key={b.title}
+              className="benefits__item"
+              initial={reduce ? false : { opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "0px 0px -10% 0px" }}
+              transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: (BENEFITS.indexOf(b) % 3) * 0.12 }}
+            >
+              <span className="benefits__line" />
               <h3>{b.title}</h3>
               <p>{b.body}</p>
-            </li>
+            </motion.li>
           ))}
         </ul>
       </div>

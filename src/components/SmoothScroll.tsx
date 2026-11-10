@@ -17,7 +17,8 @@ export default function SmoothScroll() {
       lerp: 0.09,
       smoothWheel: true,
       autoRaf: true,
-      anchors: { offset: -72, duration: 1.4 },
+      // The CSS scroll-padding-top already clears the menu bar, so no extra offset here.
+      anchors: { duration: 1.4 },
     });
 
     return () => lenis.destroy();

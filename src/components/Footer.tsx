@@ -1,7 +1,8 @@
-import { BROKER } from "@/config/event";
+import { BROKER, brokerLabel } from "@/config/event";
 
 export default function Footer() {
   const year = new Date().getFullYear();
+  const contact = [BROKER.address, BROKER.email].filter(Boolean);
   return (
     <footer className="footer">
       <div className="container">
@@ -10,11 +11,17 @@ export default function Footer() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/media/logo.png" alt="Danube Properties" width={373} height={20} loading="lazy" />
             <p>
-              Presented by {BROKER.name}, a registered Danube Properties broker
+              Presented by {brokerLabel()}
+              {BROKER.name ? ", a registered Danube Properties broker" : ""}
               {BROKER.registration ? `, registration no. ${BROKER.registration}` : ""}.
-              <br />
-              {BROKER.address}.{" "}
-              <a href={`mailto:${BROKER.email}`}>{BROKER.email}</a>
+              {contact.length > 0 && (
+                <>
+                  <br />
+                  {BROKER.address}
+                  {BROKER.address && BROKER.email ? ". " : ""}
+                  {BROKER.email && <a href={`mailto:${BROKER.email}`}>{BROKER.email}</a>}
+                </>
+              )}
             </p>
           </div>
           <nav className="footer__links" aria-label="Danube Properties">

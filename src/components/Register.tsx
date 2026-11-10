@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { BROKER, COMMUNITY_URL, EVENT, whatsappLink } from "@/config/event";
+import { BROKER, COMMUNITY_URL, EVENT, dataHolders, whatsappLink } from "@/config/event";
 import {
   BUDGETS,
   EXPERIENCE,
@@ -19,6 +19,7 @@ import {
   type RegistrationInput,
 } from "@/lib/registration";
 import { WhatsAppIcon } from "./Icons";
+import RevealText from "./motion/RevealText";
 
 type Step = "form" | "community" | "done";
 type Screen = "seat" | "goals";
@@ -256,9 +257,7 @@ export default function Register() {
       <div className="container register__grid">
         <aside className="register__aside">
           <p className="eyebrow">Free entry, registered guests only</p>
-          <h2 id="register-heading" className="heading">
-            Reserve your seat
-          </h2>
+          <RevealText id="register-heading" className="heading" lines={["Reserve", "your seat"]} />
           <p className="register__lead serif-line">
             Two short screens. Event updates and directions are shared in the roadshow WhatsApp community.
           </p>
@@ -413,8 +412,8 @@ export default function Register() {
                       <label className="check">
                         <input id="f-consent" type="checkbox" name="consent" onChange={clearError("consent")} />
                         <span>
-                          I agree to be contacted by Danube Properties and {BROKER.name} about the roadshow and its
-                          projects, and accept the{" "}
+                          I agree to be contacted by {dataHolders()} about the roadshow and its projects, and
+                          accept the{" "}
                           <a href="https://danubeproperties.com/terms-conditions/" target="_blank" rel="noopener noreferrer">
                             terms and conditions
                           </a>
@@ -468,7 +467,7 @@ export default function Register() {
                     <div className="form__note">
                       <p>Takes under a minute. No payment, no obligation to buy.</p>
                       <p>
-                        Your details go only to Danube Properties and {BROKER.name}, never to third parties.
+                        Your details go only to {dataHolders()}, never to third parties.
                       </p>
                       <p>Can’t make it? Choose ‘Either day’ and we’ll send the price list on WhatsApp.</p>
                     </div>

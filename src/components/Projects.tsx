@@ -1,62 +1,104 @@
 "use client";
 
 import Image from "next/image";
-import { motion, useMotionValueEvent, useScroll, useTransform, type MotionValue } from "framer-motion";
+import { motion, useInView, useMotionValueEvent, useScroll, useTransform, type MotionValue, type Variants } from "framer-motion";
 import { useRef, useState } from "react";
 import { PROPERTIES, type Property } from "@/config/properties";
 import { usd, whatsappLink } from "@/config/event";
 import { useReducedMotionSafe } from "@/lib/useReducedMotionSafe";
 import { WhatsAppIcon } from "./Icons";
+import RevealText from "./motion/RevealText";
 
 /**
- * Scroll timeline across the 400svh track (300svh of travel):
- *   0.00–0.20  Shahrukhz holds
- *   0.20–0.42  Greenz slides up over it
- *   0.42–0.60  Greenz holds
- *   0.60–0.82  Bayz 101 slides up
- *   0.82–1.00  Bayz 101 holds, then the page continues
+ * Scroll timeline across the 320svh track (220svh of travel). Something is
+ * always moving: each curtain takes most of the travel, with only short holds.
+ *   0.00–0.06  first panel holds
+ *   0.06–0.44  second panel opens over it
+ *   0.44–0.56  hold
+ *   0.56–0.94  third panel opens
+ *   0.94–1.00  hold, then the page continues
  */
 const ENTER: [number, number][] = [
   [0, 0],
-  [0.2, 0.42],
-  [0.6, 0.82],
+  [0.06, 0.44],
+  [0.56, 0.94],
 ];
+/** The panel whose curtain is more than half open is the active one. */
+const activeAt = (v: number) => (v < 0.25 ? 0 : v < 0.75 ? 1 : 2);
 const LAST = PROPERTIES.length - 1;
 
-function PanelContent({ p }: { p: Property }) {
+const EASE = [0.22, 1, 0.36, 1] as const;
+const cascade: Variants = {
+  hide: { transition: { staggerChildren: 0.03, staggerDirection: -1 } },
+  show: { transition: { staggerChildren: 0.09, delayChildren: 0.25 } },
+};
+const rise: Variants = {
+  hide: { opacity: 0, y: 36, transition: { duration: 0.4, ease: EASE } },
+  show: { opacity: 1, y: 0, transition: { duration: 1, ease: EASE } },
+};
+const maskRise: Variants = {
+  hide: { y: "105%", transition: { duration: 0.4, ease: EASE } },
+  show: { y: "0%", transition: { duration: 1.1, ease: EASE } },
+};
+
+function PanelContent({ p, index, state }: { p: Property; index: number; state?: "show" | "hide" }) {
+  const animated = state !== undefined;
+  const M = animated ? motion.div : "div";
+  const props = (v: Variants) => (animated ? { variants: v } : {});
   return (
     <div className="panel__content">
       <div className="container">
-        <div className="panel__body">
-          <p className="panel__location">{p.location}</p>
+        <motion.div
+          className="panel__body"
+          variants={animated ? cascade : undefined}
+          initial={animated ? "hide" : undefined}
+          animate={state}
+        >
+          <M className="panel__location" {...props(rise)}>
+            <span className="panel__count">
+              {String(index + 1).padStart(2, "0")}
+              <span className="muted"> / {String(PROPERTIES.length).padStart(2, "0")}</span>
+            </span>
+            {p.location}
+          </M>
           <h3 className="display panel__name">
-            {p.name}
-            <span className="panel__by">BY DANUBE</span>
+            <span className="mask-line">
+              <M className="mask-line__inner" {...props(maskRise)}>
+                {p.name}
+              </M>
+            </span>
+            <M className="panel__by" {...props(rise)}>
+              BY DANUBE
+            </M>
           </h3>
-          <p className="panel__tagline serif-line">{p.tagline}</p>
-          <p className="panel__summary">{p.summary}</p>
-          <dl className="panel__specs">
-            <div>
-              <dt>Starting from</dt>
-              <dd>
-                {p.startingPrice}
-                <span className="panel__usd">about {usd(p.priceAed)}</span>
-              </dd>
-            </div>
-            <div>
-              <dt>Handover</dt>
-              <dd>{p.completion}</dd>
-            </div>
-            <div>
-              <dt>Payment plan</dt>
-              <dd>{p.paymentPlan}</dd>
-            </div>
-            <div>
-              <dt>Homes</dt>
-              <dd>{p.homes}</dd>
-            </div>
-          </dl>
-          <div className="panel__actions">
+          <M {...props(rise)}>
+            <p className="panel__tagline serif-line">{p.tagline}</p>
+            <p className="panel__summary">{p.summary}</p>
+          </M>
+          <M {...props(rise)}>
+            <dl className="panel__specs">
+              <div>
+                <dt>Starting from</dt>
+                <dd>
+                  {p.startingPrice}
+                  <span className="panel__usd">about {usd(p.priceAed)}</span>
+                </dd>
+              </div>
+              <div>
+                <dt>Handover</dt>
+                <dd>{p.completion}</dd>
+              </div>
+              <div>
+                <dt>Payment plan</dt>
+                <dd>{p.paymentPlan}</dd>
+              </div>
+              <div>
+                <dt>Homes</dt>
+                <dd>{p.homes}</dd>
+              </div>
+            </dl>
+          </M>
+          <M className="panel__actions" {...props(rise)}>
             <a
               className="btn btn--whatsapp"
               href={whatsappLink(p.enquiryMessage)}
@@ -73,33 +115,52 @@ function PanelContent({ p }: { p: Property }) {
             <a className="text-link panel__more" href={p.url} target="_blank" rel="noopener noreferrer">
               Project details
             </a>
-          </div>
-        </div>
+          </M>
+        </motion.div>
       </div>
     </div>
   );
 }
 
-function Panel({ p, index, progress }: { p: Property; index: number; progress: MotionValue<number> }) {
+function Panel({
+  p,
+  index,
+  progress,
+  state,
+}: {
+  p: Property;
+  index: number;
+  progress: MotionValue<number>;
+  state: "show" | "hide";
+}) {
   const [start, end] = ENTER[index];
   const next = ENTER[index + 1];
 
-  // Slide in from below (first panel is already in place).
-  const y = useTransform(progress, index === 0 ? [0, 1] : [start, end], index === 0 ? ["0%", "0%"] : ["100%", "0%"]);
+  // Curtain wipe: the new panel opens upward from the bottom edge.
+  const clipPath = useTransform(progress, (v) => {
+    if (index === 0) return "inset(0% 0% 0% 0%)";
+    const t = Math.min(1, Math.max(0, (v - start) / (end - start)));
+    const e = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    return `inset(${(1 - e) * 100}% 0% 0% 0%)`;
+  });
   // Recede when the next panel arrives.
   const scale = useTransform(progress, next ? next : [1, 1], next ? [1, 0.9] : [1, 1]);
-  const dim = useTransform(progress, next ? next : [1, 1], next ? [0, 0.65] : [0, 0]);
-  // Slow push-in on the photograph while the panel is on screen.
-  const mediaScale = useTransform(progress, [start, next ? next[1] : 1], [1.16, 1.02]);
-  const mediaY = useTransform(progress, [start, next ? next[1] : 1], ["-3%", "3%"]);
+  const dim = useTransform(progress, next ? next : [1, 1], next ? [0, 0.7] : [0, 0]);
+  // Photograph eases back from a zoom as the curtain opens, then keeps drifting.
+  const mediaScale = useTransform(
+    progress,
+    index === 0 ? [0, next ? next[1] : 1] : [start, end, next ? next[1] : 1],
+    index === 0 ? [1.08, 1.0] : [1.4, 1.08, 1.0],
+  );
+  const mediaY = useTransform(progress, [start, next ? next[1] : 1], ["-2%", "3%"]);
 
   return (
     <motion.article
       className="panel"
-      style={{ y, scale, zIndex: index + 1 }}
+      style={{ clipPath, scale, zIndex: index + 1 }}
       aria-labelledby={`project-${p.id}`}
     >
-      <motion.div className="panel__media" style={{ scale: mediaScale, y: mediaY }}>
+      <motion.div className="panel__media" style={{ scale: mediaScale, y: mediaY }} data-cursor="view">
         <Image
           src={p.image}
           alt={`${p.name} by Danube, ${p.location}`}
@@ -113,7 +174,7 @@ function Panel({ p, index, progress }: { p: Property; index: number; progress: M
       <span id={`project-${p.id}`} className="sr-only">
         {p.name}
       </span>
-      <PanelContent p={p} />
+      <PanelContent p={p} index={index} state={state} />
       <motion.div className="panel__dim" style={{ opacity: dim }} aria-hidden="true" />
     </motion.article>
   );
@@ -129,7 +190,7 @@ function StaticPanel({ p, index }: { p: Property; index: number }) {
       <span id={`project-${p.id}`} className="sr-only">
         {p.name}
       </span>
-      <PanelContent p={p} />
+      <PanelContent p={p} index={index} />
     </article>
   );
 }
@@ -140,9 +201,10 @@ export default function Projects() {
   const [active, setActive] = useState(0);
 
   const { scrollYProgress } = useScroll({ target: trackRef, offset: ["start start", "end end"] });
+  const inView = useInView(trackRef, { margin: "-35% 0px -35% 0px" });
 
   useMotionValueEvent(scrollYProgress, "change", (v) => {
-    const i = v < 0.31 ? 0 : v < 0.71 ? 1 : 2;
+    const i = activeAt(v);
     setActive((prev) => (prev === i ? prev : Math.min(i, LAST)));
   });
 
@@ -151,11 +213,7 @@ export default function Projects() {
       <div className="container projects__intro">
         <div>
           <p className="eyebrow">The three projects on show</p>
-          <h2 id="projects-heading" className="heading">
-            Your Dubai home,
-            <br />
-            from 1% a month
-          </h2>
+          <RevealText id="projects-heading" className="heading" lines={["Your Dubai home,", "from 1% a month"]} />
         </div>
         <div className="projects__frame">
           <p>
@@ -170,7 +228,15 @@ export default function Projects() {
         <div className="stack__sticky">
           {reduce
             ? PROPERTIES.map((p, i) => <StaticPanel key={p.id} p={p} index={i} />)
-            : PROPERTIES.map((p, i) => <Panel key={p.id} p={p} index={i} progress={scrollYProgress} />)}
+            : PROPERTIES.map((p, i) => (
+                <Panel
+                  key={p.id}
+                  p={p}
+                  index={i}
+                  progress={scrollYProgress}
+                  state={inView && active === i ? "show" : "hide"}
+                />
+              ))}
 
           {!reduce && (
             <ol className="rail" aria-label="Projects">

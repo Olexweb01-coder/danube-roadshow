@@ -1,4 +1,8 @@
+"use client";
+
 import Image from "next/image";
+import { motion } from "framer-motion";
+import RevealText from "./motion/RevealText";
 import { NIGERIAN_TESTIMONIALS, PROCESS_SCREENSHOTS, REVIEWS } from "@/config/proof";
 
 /**
@@ -8,15 +12,21 @@ import { NIGERIAN_TESTIMONIALS, PROCESS_SCREENSHOTS, REVIEWS } from "@/config/pr
  */
 export default function SocialProof() {
   return (
-    <section className="proof" aria-labelledby="proof-heading">
+    <section className="proof proof--light" aria-labelledby="proof-heading">
       <div className="container">
         <p className="eyebrow">Google reviews of Danube</p>
-        <h2 id="proof-heading" className="heading">
-          What Danube homeowners say
-        </h2>
+        <RevealText id="proof-heading" className="heading" lines={["What Danube", "homeowners say"]} />
         <ul className="reviews" role="list">
-          {REVIEWS.map((r) => (
-            <li key={r.name} className="review">
+          {REVIEWS.map((r, i) => (
+            <motion.li
+              key={r.name}
+              className="review"
+              initial={{ opacity: 0, y: 60 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "0px 0px -10% 0px" }}
+              transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1], delay: i * 0.14 }}
+            >
+              <span className="review__mark" aria-hidden="true">“</span>
               <blockquote>
                 <p>“{r.quote}”</p>
               </blockquote>
@@ -24,7 +34,7 @@ export default function SocialProof() {
                 <strong>{r.name}</strong>
                 <span>{r.context}, Google review</span>
               </p>
-            </li>
+            </motion.li>
           ))}
         </ul>
 

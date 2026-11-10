@@ -537,7 +537,7 @@ textarea {
 
 .stack {
   position: relative;
-  height: 400svh;
+  height: 320svh;
 }
 .stack__sticky {
   position: sticky;
@@ -1881,5 +1881,768 @@ select.field__control option {
 @media (max-width: 560px) {
   .form__submit .form__buttons .btn {
     width: auto;
+  }
+}
+
+/* ================================================================
+   Cinematic layer
+================================================================ */
+
+/* Opening curtain: pure CSS, lifts on its own */
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  background: var(--midnight);
+  animation: intro-lift 0.75s cubic-bezier(0.77, 0, 0.18, 1) 1.45s both;
+}
+.intro__inner {
+  display: grid;
+  justify-items: center;
+  gap: 1.1rem;
+}
+.intro__logo {
+  width: clamp(200px, 26vw, 320px);
+  height: auto;
+  animation: intro-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+}
+.intro__rule {
+  width: 120px;
+  height: 1px;
+  background: var(--danube-red);
+  transform-origin: left center;
+  animation: intro-rule 0.9s cubic-bezier(0.77, 0, 0.18, 1) 0.45s both;
+}
+.intro__line {
+  font-size: 0.85rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--mist);
+  animation: intro-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.7s both;
+}
+@keyframes intro-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+@keyframes intro-rule {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes intro-lift {
+  to {
+    transform: translateY(-100%);
+    visibility: hidden;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .intro {
+    display: none;
+  }
+}
+
+/* Hero */
+.hero__settle {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+.hero__night {
+  position: absolute;
+  inset: 0;
+  background: var(--midnight);
+  opacity: 0;
+  pointer-events: none;
+}
+.letterbox {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 13vh;
+  background: #01050f;
+  z-index: 3;
+  pointer-events: none;
+}
+.letterbox--top {
+  top: 0;
+  transform-origin: top center;
+}
+.letterbox--bottom {
+  bottom: 0;
+  transform-origin: bottom center;
+}
+.hero__title-line {
+  display: block;
+  overflow: visible;
+  padding-bottom: 0;
+  will-change: transform;
+}
+.hero__word {
+  display: inline-block;
+  white-space: nowrap;
+}
+.hero__char {
+  display: inline-block;
+  will-change: transform, opacity, filter;
+}
+.hero__kicker::before {
+  display: none;
+}
+.hero__kicker-rule {
+  width: 40px;
+  height: 1px;
+  background: var(--danube-red);
+  flex: none;
+}
+.scroll-cue-wrap {
+  position: absolute;
+  right: var(--gutter);
+  top: 50%;
+  z-index: 4;
+}
+.scroll-cue {
+  display: block;
+  width: 1px;
+  height: 84px;
+  background: var(--line);
+  position: relative;
+  overflow: hidden;
+}
+.scroll-cue__line {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 40%;
+  background: var(--ivory);
+  animation: cue 2.2s cubic-bezier(0.77, 0, 0.18, 1) infinite;
+}
+@keyframes cue {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(260%);
+  }
+}
+@media (max-width: 760px) {
+  .scroll-cue-wrap {
+    display: none;
+  }
+  .letterbox {
+    height: 9vh;
+  }
+}
+
+/* Masked line reveals */
+.mask-line {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+.mask-line__inner {
+  display: inline-block;
+  transform-origin: 0% 100%;
+  will-change: transform;
+}
+.panel__name .mask-line {
+  padding-bottom: 0.04em;
+}
+
+/* Image wipe */
+.wipe {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  will-change: clip-path;
+}
+.wipe__img {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+.wipe__img img {
+  object-fit: cover;
+}
+
+/* Benefits accent */
+.benefits__item {
+  position: relative;
+}
+.benefits__line {
+  display: block;
+  width: 28px;
+  height: 2px;
+  margin-bottom: 1.1rem;
+  background: var(--danube-red);
+}
+
+/* Marquee */
+.marquee {
+  overflow: hidden;
+  padding-block: clamp(2rem, 6vh, 4rem);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  user-select: none;
+}
+.marquee__track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
+.marquee__item {
+  display: inline-flex;
+  align-items: center;
+  font-size: clamp(3.6rem, 10vw, 9.5rem);
+  font-weight: 300;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.38);
+}
+.marquee__dot {
+  width: 0.14em;
+  height: 0.14em;
+  margin-inline: 0.45em;
+  border-radius: 50%;
+  background: var(--danube-red);
+  flex: none;
+}
+
+/* Pinned horizontal gallery */
+.gallery {
+  position: relative;
+}
+.gallery__sticky {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+.gallery__track {
+  display: flex;
+  align-items: center;
+  gap: clamp(1.25rem, 3vw, 3rem);
+  width: max-content;
+  padding-inline: var(--gutter);
+  will-change: transform;
+}
+.gallery__intro {
+  width: min(34rem, 82vw);
+  flex: none;
+  padding-right: clamp(1rem, 4vw, 4rem);
+}
+.gallery__title {
+  font-size: clamp(2.4rem, 5vw, 4.6rem);
+}
+.gallery__lead {
+  margin: 1.5rem 0 0;
+  max-width: 34ch;
+}
+.gallery__card {
+  flex: none;
+  width: clamp(280px, 44vw, 720px);
+  margin: 0;
+}
+.gallery__card:nth-of-type(even) {
+  margin-top: 12vh;
+}
+.gallery__card:nth-of-type(odd) {
+  margin-bottom: 12vh;
+}
+.gallery__img {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--harbour);
+}
+.gallery__img img {
+  object-fit: cover;
+  transition: transform 1.4s var(--ease);
+}
+.gallery__card:hover .gallery__img img {
+  transform: scale(1.05);
+}
+.gallery__card figcaption {
+  display: flex;
+  align-items: baseline;
+  gap: 0.9rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+.gallery__index {
+  font-size: 0.85rem;
+  color: var(--danube-red);
+  font-variant-numeric: tabular-nums;
+}
+.gallery__name {
+  font-size: clamp(1.4rem, 2.4vw, 2rem);
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.gallery__more {
+  flex: none;
+  display: grid;
+  gap: 0.75rem;
+  width: clamp(220px, 22vw, 320px);
+  padding: 2rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--mist);
+  transition: border-color 0.4s var(--ease), color 0.4s var(--ease);
+}
+.gallery__more:hover {
+  border-color: var(--ivory);
+  color: var(--ivory);
+}
+.gallery__more-num {
+  font-size: clamp(3.5rem, 6vw, 5.5rem);
+  font-weight: 300;
+  line-height: 1;
+  color: var(--ivory);
+}
+.gallery__foot {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: clamp(1.25rem, 4vh, 2.5rem);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+.gallery__foot .fineprint {
+  margin: 0;
+}
+.gallery__progress {
+  flex: 1;
+  max-width: 320px;
+  height: 1px;
+  background: var(--line);
+  overflow: hidden;
+}
+.gallery__progress span {
+  display: block;
+  height: 100%;
+  background: var(--ivory);
+  transform-origin: 0 50%;
+}
+.gallery--static {
+  padding-block: clamp(4rem, 10vh, 7rem);
+}
+.gallery__track--static {
+  width: 100%;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.gallery__track--static .gallery__card {
+  margin: 0;
+}
+@media (max-width: 760px) {
+  .gallery__card {
+    width: 78vw;
+  }
+  .gallery__card:nth-of-type(even),
+  .gallery__card:nth-of-type(odd) {
+    margin: 0;
+  }
+}
+
+/* Panels */
+.panel {
+  will-change: transform, clip-path;
+  transform-origin: 50% 30%;
+}
+.panel__count {
+  margin-right: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ivory);
+}
+.panel__location::before {
+  display: none;
+}
+
+/* Light reviews section */
+.proof--light {
+  background: #eef1f6;
+  color: var(--midnight);
+}
+.proof--light .eyebrow,
+.proof--light .muted,
+.proof--light .review__who span,
+.proof--light .story__who,
+.proof--light .story__arc dd {
+  color: #4b5a7a;
+}
+.proof--light .review {
+  position: relative;
+  background: #ffffff;
+  border-color: rgba(6, 18, 48, 0.1);
+  box-shadow: 0 30px 60px -40px rgba(6, 18, 48, 0.35);
+  overflow: hidden;
+}
+.review__mark {
+  position: absolute;
+  top: -0.2em;
+  right: 0.25em;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 9rem;
+  line-height: 1;
+  color: var(--danube-red);
+  opacity: 0.14;
+  pointer-events: none;
+}
+
+/* Film grain */
+.grain {
+  position: fixed;
+  inset: -100%;
+  z-index: 90;
+  pointer-events: none;
+  opacity: 0.055;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain 0.9s steps(6) infinite;
+}
+@keyframes grain {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-3%, 2%); }
+  40% { transform: translate(2%, -3%); }
+  60% { transform: translate(-2%, -1%); }
+  80% { transform: translate(3%, 3%); }
+  100% { transform: translate(0, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .grain {
+    animation: none;
+  }
+}
+
+/* Custom cursor (desktop) */
+html.has-cursor,
+html.has-cursor a,
+html.has-cursor button,
+html.has-cursor summary,
+html.has-cursor label,
+html.has-cursor [role="tab"] {
+  cursor: none;
+}
+html.has-cursor input,
+html.has-cursor select,
+html.has-cursor textarea {
+  cursor: auto;
+}
+.cursor-ring,
+.cursor-dot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 300;
+  pointer-events: none;
+  border-radius: 50%;
+  translate: -50% -50%;
+}
+.cursor-ring {
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  mix-blend-mode: difference;
+}
+.cursor-ring[data-mode="link"] {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: transparent;
+}
+.cursor-ring[data-mode="view"] {
+  background: var(--ivory);
+  border-color: transparent;
+  mix-blend-mode: normal;
+}
+.cursor-ring__label {
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--midnight);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+.cursor-ring[data-mode="view"] .cursor-ring__label {
+  opacity: 1;
+}
+.cursor-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--ivory);
+  mix-blend-mode: difference;
+}
+
+/* ================================================================
+   Safety net: the page must look finished even if motion can't run.
+================================================================ */
+
+/* Very tall frames (some previews size the frame to the whole page):
+   cap everything that is "one screen tall". */
+.hero {
+  height: min(160svh, 2600px);
+}
+.hero__sticky,
+.stack__sticky,
+.gallery__sticky {
+  height: min(100svh, 1600px);
+}
+.stack {
+  height: min(320svh, 5200px);
+}
+.stack--static .panel {
+  min-height: min(100svh, 1600px);
+}
+@media (max-width: 640px) {
+  .hero {
+    height: min(150svh, 2400px);
+  }
+}
+
+/* Elements that start hidden and are revealed by motion */
+html:not(.js) .hero__char,
+html:not(.js) .hero__kicker,
+html:not(.js) .hero__sub,
+html:not(.js) .hero__action,
+html:not(.js) .hero__row,
+html:not(.js) .hero__settle,
+html:not(.js) .mask-line__inner,
+html:not(.js) .wipe,
+html:not(.js) .wipe__img,
+html:not(.js) .benefits__item,
+html:not(.js) .review,
+html:not(.js) .programme__item,
+html:not(.js) .statement__word,
+html:not(.js) .panel__body,
+html:not(.js) .panel__body *,
+html:not(.js) .scroll-cue {
+  opacity: 1 !important;
+  transform: none !important;
+  filter: none !important;
+  clip-path: none !important;
+}
+html:not(.js) .letterbox {
+  display: none !important;
+}
+/* No scripts: stacked panels and the gallery become plain flowing sections */
+html:not(.js) .stack,
+html:not(.js) .gallery {
+  height: auto !important;
+}
+html:not(.js) .stack__sticky,
+html:not(.js) .gallery__sticky {
+  position: relative;
+  height: auto;
+  overflow: visible;
+}
+html:not(.js) .panel {
+  position: relative;
+  min-height: min(100svh, 1600px);
+  clip-path: none !important;
+  transform: none !important;
+}
+html:not(.js) .panel__dim,
+html:not(.js) .rail,
+html:not(.js) .gallery__foot {
+  display: none;
+}
+html:not(.js) .gallery {
+  padding-block: clamp(4rem, 10vh, 7rem);
+}
+html:not(.js) .gallery__track {
+  width: 100%;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  transform: none !important;
+}
+html:not(.js) .gallery__card {
+  margin: 0 !important;
+}
+
+/* No scripts: the hero is a single screen, no scroll runway behind it */
+html:not(.js) .hero {
+  height: auto;
+}
+html:not(.js) .hero__sticky {
+  position: relative;
+}
+html:not(.js) .scroll-cue-wrap {
+  display: none;
+}
+
+/* ================================================================
+   Short screens: size by height as well as width so nothing runs
+   under the menu bar (laptops with browser chrome, small phones).
+================================================================ */
+.hero__title {
+  font-size: clamp(2rem, min(6.6vw, 10.5vh), 6.8rem);
+}
+.panel__name {
+  font-size: clamp(2.1rem, min(7.4vw, 10.5vh), 6.75rem);
+}
+@media (max-height: 760px) {
+  .hero__facts {
+    display: none;
+  }
+  .hero__kicker {
+    margin-bottom: 0.9rem;
+  }
+  .hero__sub {
+    margin-top: 0.85rem;
+  }
+  .hero__action {
+    margin-top: 1rem;
+    gap: 0.5rem;
+  }
+  .micro--quiet {
+    display: none;
+  }
+  .hero__row {
+    margin-top: 1rem;
+    padding-top: 0.85rem;
+  }
+  .panel__tagline {
+    display: none;
+  }
+  .panel__location {
+    margin-bottom: 0.6rem;
+  }
+  .panel__specs {
+    margin-top: 1rem;
+    padding-top: 0.85rem;
+  }
+  .panel__actions {
+    margin-top: 1rem;
+  }
+}
+@media (max-height: 640px) {
+  .hero__sub,
+  .hero__action .micro {
+    display: none;
+  }
+  .panel__specs div:nth-child(4) {
+    display: none;
+  }
+  .panel__specs {
+    grid-template-columns: repeat(3, auto);
+  }
+}
+@media (max-height: 700px) and (max-width: 760px) {
+  .panel__specs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem 0.75rem;
+  }
+  .panel__specs div:nth-child(4) {
+    display: none;
+  }
+  .panel__specs dd {
+    font-size: 0.95rem;
+  }
+  .panel__actions .panel__more {
+    display: none;
+  }
+}
+
+/* Phones: keep anything scrolled into view (keyboard focus, links) clear of
+   the sticky bottom bar, and let the footer's last lines scroll above it. */
+@media (max-width: 760px) {
+  html {
+    scroll-padding-bottom: 88px;
+  }
+  .footer {
+    padding-bottom: calc(2.5rem + 80px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Very short windows: phones held sideways, split screens, small preview
+   panes. Keep only the headline, the main buttons and the essentials. */
+@media (max-height: 520px) {
+  :root {
+    --nav-h: 60px;
+  }
+  .nav .btn {
+    min-height: 38px;
+  }
+  .hero__kicker,
+  .hero__sub,
+  .hero__action .micro,
+  .hero__row,
+  .scroll-cue-wrap {
+    display: none;
+  }
+  .hero__content {
+    padding-bottom: 1rem;
+  }
+  .hero__action {
+    margin-top: 0.75rem;
+  }
+  .hero__ctas .btn {
+    min-height: 44px;
+    padding-block: 0.5rem;
+  }
+  .letterbox {
+    height: 7vh;
+  }
+  .panel__content {
+    padding-bottom: 1rem;
+  }
+  .panel__location {
+    margin-bottom: 0.3rem;
+  }
+  .panel__by,
+  .panel__tagline,
+  .panel__summary,
+  .panel__more {
+    display: none;
+  }
+  .panel__specs {
+    grid-template-columns: repeat(2, auto);
+    margin-top: 0.6rem;
+    padding-top: 0.6rem;
+  }
+  .panel__specs div:nth-child(n + 3) {
+    display: none;
+  }
+  .panel__actions {
+    margin-top: 0.75rem;
+  }
+  .panel__actions .btn {
+    min-height: 44px;
+    padding-block: 0.5rem;
+    flex: 0 0 auto;
+  }
+}
+@media (max-height: 520px) and (max-width: 760px) {
+  .panel__actions .btn {
+    flex: 1 1 auto;
+  }
+}
+/* Short windows: the copy fills the height, so shade from the left
+   (behind the text) and let the photo show on the right. */
+@media (max-height: 520px) {
+  .panel__shade {
+    background: linear-gradient(90deg, rgba(6, 18, 48, 0.9) 0%, rgba(6, 18, 48, 0.62) 50%, rgba(6, 18, 48, 0.12) 100%);
   }
 }

@@ -1,4 +1,5 @@
-import { BROKER, EVENT } from "@/config/event";
+import { BROKER, EVENT, dataHolders } from "@/config/event";
+import RevealText from "./motion/RevealText";
 
 const FAQS = [
   {
@@ -31,11 +32,13 @@ const FAQS = [
   },
   {
     q: "Who is organising the roadshow?",
-    a: `${BROKER.name}, a registered Danube Properties broker, with Danube Properties’ sales team.`,
+    a: BROKER.name
+      ? `${BROKER.name}, a registered Danube Properties broker, with Danube Properties’ sales team.`
+      : "A registered Danube Properties broker, with Danube Properties’ sales team.",
   },
   {
     q: "What happens to my details?",
-    a: `They are used only to arrange your visit and follow up on your enquiry, by Danube Properties and ${BROKER.name}. They are never sold or shared with third parties.`,
+    a: `They are used only to arrange your visit and follow up on your enquiry, by ${dataHolders()}. They are never sold or shared with third parties.`,
   },
 ];
 
@@ -45,9 +48,7 @@ export default function Faq() {
       <div className="container faq__grid">
         <div>
           <p className="eyebrow">Before you register</p>
-          <h2 id="faq-heading" className="heading">
-            Questions investors ask us
-          </h2>
+          <RevealText id="faq-heading" className="heading" lines={["Questions", "investors ask us"]} />
         </div>
         <div className="faq__list">
           {FAQS.map((f) => (

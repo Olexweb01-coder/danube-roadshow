@@ -46,7 +46,20 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${jost.variable} ${cormorant.variable}`}>
+    <html lang="en" className={`${jost.variable} ${cormorant.variable}`} suppressHydrationWarning>
+      <head>
+        {/*
+          'js' turns on the motion layout. If the app hasn't started within 6s
+          (blocked or failed scripts), drop back to the plain flowing page so
+          there are never long pinned stretches where nothing moves.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(d){d.classList.add('js');setTimeout(function(){if(!d.classList.contains('motion-ready'))d.classList.remove('js')},6000)})(document.documentElement)",
+          }}
+        />
+      </head>
       <body>{children}</body>
     </html>
   );

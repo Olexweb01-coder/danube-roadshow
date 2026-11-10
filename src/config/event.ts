@@ -1,6 +1,6 @@
 /**
  * Roadshow details. Edit and redeploy; every section reads from here.
- * Hours follow the GText proposal's format (training day, then grand finale).
+ * Saturday is the masterclass and investment day; Sunday is the grand finale.
  * Confirm both with the venue before launch.
  */
 export const EVENT = {
@@ -22,17 +22,26 @@ export const EVENT = {
   dailyCapacity: 200,
 } as const;
 
-/** The registered Danube broker presenting the event. Confirm before launch. */
+/**
+ * The registered Danube broker presenting the event. Every field is optional:
+ * leave one empty and the page simply leaves it out.
+ */
 export const BROKER = {
-  name: "GText Suites Properties",
-  /** Dubai broker registration (ORN/RERA). Leave empty to hide. */
+  /** Company name. Empty: the page says "a registered Danube Properties broker". */
+  name: "",
+  /** Dubai broker registration (ORN/RERA). Empty to hide. */
   registration: "",
-  address: "4 Joe Faraday Street, Ikoyi, Lagos",
-  email: "info@gtextsuites.com",
-  website: "https://www.gtextsuites.com",
+  address: "",
+  email: "",
   /** Hours promised in the "we reply within" line. */
   replyWithinHours: 2,
 };
+
+/** "Acme Realty" or, with no name set, "a registered Danube Properties broker". */
+export const brokerLabel = () => BROKER.name || "a registered Danube Properties broker";
+/** Who handles personal data: "Danube Properties and Acme Realty" / "...and its registered broker". */
+export const dataHolders = () =>
+  BROKER.name ? `Danube Properties and ${BROKER.name}` : "Danube Properties and its registered broker";
 
 /** WhatsApp number that receives property enquiries (digits only, with country code). */
 export const ENQUIRY_WHATSAPP = "971585398610";

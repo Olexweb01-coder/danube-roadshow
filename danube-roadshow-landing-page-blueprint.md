@@ -12,7 +12,7 @@ Prepared 9 November 2026 for a registered Danube Properties broker. Event: Satur
 
 Everything on the page attacks that belief from a different side: the developer comes to them (face to face), the developer is big and has delivered (proof), the money is staged and registered (the 1% plan and Dubai Land Department registration), and the asset is in a currency that does not lose value against the dollar (the AED has been pegged to the USD since 1997).
 
-**The conversion goal.** Not "fill the room". The page should produce *qualified* registrations, sorted into the Hot, Warm and Nurture tiers from the GText proposal before anyone walks in, so the sales team knows who to sit with first.
+**The conversion goal.** Not "fill the room". The page should produce *qualified* registrations, sorted into Hot, Warm and Nurture tiers before anyone walks in, so the sales team knows who to sit with first.
 
 **What we take from loftandkeys.com, and what we do better**
 

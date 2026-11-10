@@ -1,10 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef, useState } from "react";
 import { EVENT } from "@/config/event";
 import { useReducedMotionSafe } from "@/lib/useReducedMotionSafe";
+import RevealText from "./motion/RevealText";
+import WipeImage from "./motion/WipeImage";
 
 const PROGRAMME = [
   {
@@ -56,21 +57,17 @@ export default function EventInfo() {
       <div className="container event__grid">
         <div ref={ref} className="event__image">
           <motion.div className="event__image-inner" style={reduce ? undefined : { y }}>
-            <Image
+            <WipeImage
               src="/media/greenz-3.webp"
               alt="Fully furnished living room in a Greenz by Danube villa"
-              fill
               sizes="(max-width: 860px) 100vw, 50vw"
+              className="event__wipe"
             />
           </motion.div>
         </div>
         <div>
           <p className="eyebrow">The weekend</p>
-          <h2 id="event-heading" className="heading">
-            Two days, planned
-            <br />
-            around your decision
-          </h2>
+          <RevealText id="event-heading" className="heading" lines={["Two days, planned", "around your decision"]} />
           <div className="tabs" role="tablist" aria-label="Programme by day">
             {PROGRAMME.map((d, i) => (
               <button
@@ -90,12 +87,18 @@ export default function EventInfo() {
             <p className="programme__meta">
               {day.day}, {day.hours}. {day.note}.
             </p>
-            <ol className="programme" role="list">
-              {day.items.map(([time, what]) => (
-                <li key={time + what} className="programme__item">
+            <ol className="programme" role="list" key={tab}>
+              {day.items.map(([time, what], i) => (
+                <motion.li
+                  key={time + what}
+                  className="programme__item"
+                  initial={{ opacity: 0, x: -24 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: i * 0.045 }}
+                >
                   <span className="programme__time">{time}</span>
                   <span>{what}</span>
-                </li>
+                </motion.li>
               ))}
             </ol>
           </div>

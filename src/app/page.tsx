@@ -13,6 +13,11 @@ import Footer from "@/components/Footer";
 import SmoothScroll from "@/components/SmoothScroll";
 import ScrollProgress from "@/components/ScrollProgress";
 import FloatingWhatsApp from "@/components/FloatingWhatsApp";
+import Intro from "@/components/Intro";
+import Marquee from "@/components/motion/Marquee";
+import Cursor from "@/components/motion/Cursor";
+import Magnetic from "@/components/motion/Magnetic";
+import MotionReady from "@/components/motion/MotionReady";
 
 /**
  * Build order follows the conversion blueprint:
@@ -26,12 +31,15 @@ export default function Page() {
       <a className="skip-link" href="#register">
         Skip to registration
       </a>
+      <MotionReady />
+      <Intro />
       <SmoothScroll />
       <ScrollProgress />
       <Nav />
       <main>
         <Hero />
         <Statement />
+        <Marquee text="Meet Danube in Lagos | Own in Dubai" />
         <Delivered />
         <Projects />
         <SocialProof />
@@ -39,10 +47,14 @@ export default function Page() {
         <SeatValue />
         <Faq />
         <Register />
+        <Marquee text="Bayz 101 | Shahrukhz Residences | Greenz" baseVelocity={2} />
         <FinalCta />
       </main>
       <Footer />
       <FloatingWhatsApp />
+      <div className="grain" aria-hidden="true" />
+      <Cursor />
+      <Magnetic />
     </>
   );
 }
