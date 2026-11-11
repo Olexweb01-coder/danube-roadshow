@@ -15,7 +15,6 @@ import ScrollProgress from "@/components/ScrollProgress";
 import FloatingWhatsApp from "@/components/FloatingWhatsApp";
 import Intro from "@/components/Intro";
 import Marquee from "@/components/motion/Marquee";
-import Cursor from "@/components/motion/Cursor";
 import Magnetic from "@/components/motion/Magnetic";
 import MotionReady from "@/components/motion/MotionReady";
 
@@ -53,7 +52,6 @@ export default function Page() {
       <Footer />
       <FloatingWhatsApp />
       <div className="grain" aria-hidden="true" />
-      <Cursor />
       <Magnetic />
     </>
   );

@@ -206,18 +206,6 @@ export default function Hero() {
           </div>
         </motion.div>
 
-        <motion.div className="scroll-cue-wrap" style={reduce ? undefined : { opacity: contentOpacity }}>
-          <motion.a
-            href="#reframe"
-            className="scroll-cue"
-            aria-label="Scroll to continue"
-            initial={{ opacity: 0 }}
-            animate={show ? { opacity: 1 } : undefined}
-            transition={{ duration: 1, delay: 1.8 }}
-          >
-            <span className="scroll-cue__line" />
-          </motion.a>
-        </motion.div>
       </div>
     </section>
   );
