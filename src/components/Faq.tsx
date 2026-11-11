@@ -24,11 +24,11 @@ const FAQS = [
   },
   {
     q: "I live abroad or can’t make the dates. Can I still take part?",
-    a: "Yes. Register anyway and choose ‘Either day’. We’ll send the price list and floor plans on WhatsApp and arrange a call with an advisor.",
+    a: "Yes. Register anyway, and we’ll send the price list and floor plans on WhatsApp and arrange a call with an advisor.",
   },
   {
     q: "Can I bring my spouse or business partner?",
-    a: "Yes, and we recommend it. Add them under ‘Who’s attending’ when you register, up to four people.",
+    a: "Yes, and we recommend it, especially if you make the decision together. They’re welcome on either day.",
   },
   {
     q: "Who is organising the roadshow?",

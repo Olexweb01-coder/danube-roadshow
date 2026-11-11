@@ -1,32 +1,35 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { BROKER, COMMUNITY_URL, EVENT, dataHolders, whatsappLink } from "@/config/event";
+import { PROPERTIES } from "@/config/properties";
 import {
   BUDGETS,
-  EXPERIENCE,
-  GOALS,
-  GUESTS,
-  INTERESTS,
-  PAYMENT,
-  STEP_ONE,
-  TIMELINES,
-  UNIT_TYPES,
+  BUDGET_OTHER,
+  BUYING,
+  LOCATIONS,
+  READY,
+  SCREENS,
+  SCREEN_ORDER,
   normalise,
   validate,
   type FieldErrors,
   type RegistrationInput,
+  type Screen,
 } from "@/lib/registration";
+import { SCROLL_LOCK, SCROLL_UNLOCK } from "./SmoothScroll";
 import { WhatsAppIcon } from "./Icons";
 import RevealText from "./motion/RevealText";
 
 type Step = "form" | "community" | "done";
-type Screen = "seat" | "goals";
+/** `day` is only present on passes saved by the earlier version of the form. */
 type Saved = { id: string; firstName: string; joined: boolean; day?: string };
 
 const STORAGE_KEY = "danube-roadshow-registration";
 const EASE = [0.22, 1, 0.36, 1] as const;
+/** Marks the history entry added while the pop-up is open, so Back closes it. */
+const HISTORY_FLAG = "danubeRsvp";
 
 function readSaved(): Saved | null {
   try {
@@ -47,10 +50,15 @@ function writeSaved(v: Saved | null) {
   }
 }
 
-function passDay(day?: string) {
-  const d = EVENT.days.find((x) => x.value === day);
-  if (!d || !d.hours) return `${EVENT.dateLabel}. Either day, ${EVENT.timeLabel}`;
-  return `${d.label}, ${d.hours}`;
+const historyFlagged = () => !!(window.history.state as Record<string, unknown> | null)?.[HISTORY_FLAG];
+
+/** Text inputs use f-name; choice groups use f-name-0 for their first option. */
+function focusField(name: keyof RegistrationInput) {
+  const el =
+    document.getElementById(`f-${name}`) ||
+    document.querySelector<HTMLInputElement>(`input[name="${name}"]:checked`) ||
+    document.getElementById(`f-${name}-0`);
+  el?.focus();
 }
 
 function Field({
@@ -81,72 +89,180 @@ function Field({
   );
 }
 
-function Select({
+/** One-tap answers: real radio buttons, styled as rows. */
+function Choices({
   name,
   options,
-  placeholder,
+  labelledBy,
+  label,
   error,
-  onChange,
+  compact,
+  onPick,
 }: {
   name: keyof RegistrationInput;
   options: readonly string[];
-  placeholder: string;
+  labelledBy?: string;
+  label?: string;
   error?: string;
-  onChange: () => void;
+  compact?: boolean;
+  onPick: (value: string) => void;
 }) {
   return (
-    <select
-      id={`f-${name}`}
-      name={name}
-      className="field__control"
-      defaultValue=""
-      required
-      aria-invalid={!!error}
+    <fieldset
+      className={`choices field--full${compact ? " choices--compact" : ""}`}
+      aria-labelledby={labelledBy}
       aria-describedby={error ? `f-${name}-error` : undefined}
-      onChange={onChange}
+      data-invalid={error ? "true" : undefined}
     >
-      <option value="" disabled>
-        {placeholder}
-      </option>
-      {options.map((o) => (
-        <option key={o} value={o}>
-          {o}
-        </option>
-      ))}
-    </select>
+      {label && <legend className="field__label choices__legend">{label}</legend>}
+      <div className="choices__list">
+        {options.map((o, i) => (
+          <label className="choice" key={o}>
+            <input
+              id={`f-${name}-${i}`}
+              type="radio"
+              name={name}
+              value={o}
+              aria-invalid={!!error}
+              onChange={() => onPick(o)}
+            />
+            <span>{o}</span>
+          </label>
+        ))}
+      </div>
+      {error && (
+        <span className="field__error" id={`f-${name}-error`} role="alert">
+          {error}
+        </span>
+      )}
+    </fieldset>
   );
 }
 
+const SCREEN_LABEL: Record<Screen, string> = {
+  details: "Your details",
+  budget: "Question 1 of 3",
+  buying: "Question 2 of 3",
+  ready: "Question 3 of 3",
+};
+
 export default function Register() {
+  const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>("form");
+  const [screen, setScreen] = useState<Screen>("details");
   const [saved, setSaved] = useState<Saved | null>(null);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [alert, setAlert] = useState("");
   const [sending, setSending] = useState(false);
-  const [screen, setScreen] = useState<Screen>("seat");
+  const [budget, setBudget] = useState("");
+  const [project, setProject] = useState("");
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  const headingRef = useRef<HTMLHeadingElement>(null);
-  const lastView = useRef<string | null>(null);
+  const headings = useRef<Partial<Record<string, HTMLElement | null>>>({});
+  const pressedOnBackdrop = useRef(false);
+
+  const view = step === "form" ? screen : step;
+  // Shown while any answer is highlighted, and gone as soon as the last one is fixed.
+  // `alert` is kept for problems that aren't about one field (server down, offline).
+  const fieldAlert = Object.values(errors).some(Boolean) ? "Check the highlighted answers." : "";
+  const message = alert || fieldAlert;
 
   // Resume an earlier visit: someone who registered but never joined the
-  // community lands back on the community step.
+  // community goes back to the community step when they open the form.
   useEffect(() => {
     const s = readSaved();
     if (s) {
       setSaved(s);
       setStep(s.joined ? "done" : "community");
     }
+    // A reload while the pop-up was open leaves its history marker behind.
+    if (historyFlagged()) {
+      window.history.replaceState({ ...window.history.state, [HISTORY_FLAG]: false }, "");
+    }
   }, []);
 
-  // Move focus to the new step's heading only when the step really changes,
-  // never on page load (effects can run twice in development).
+  const openForm = useCallback((fromProject?: string) => {
+    if (fromProject) setProject(fromProject);
+    setOpen(true);
+    if (!historyFlagged()) window.history.pushState({ [HISTORY_FLAG]: true }, "");
+  }, []);
+
+  const closeForm = useCallback(() => {
+    // Going back removes the entry added on open; popstate then closes the pop-up.
+    if (historyFlagged()) window.history.back();
+    else setOpen(false);
+  }, []);
+
+  // Every "Reserve my seat" link on the page opens the pop-up instead of scrolling.
   useEffect(() => {
-    const view = `${step}:${screen}`;
-    if (lastView.current !== null && lastView.current !== view) {
-      headingRef.current?.focus({ preventScroll: true });
+    const onClick = (e: MouseEvent) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const link = (e.target as Element | null)?.closest?.('a[href="#register"]');
+      if (!link) return;
+      e.preventDefault();
+      e.stopPropagation(); // keeps the smooth-scroll library from also scrolling to the section
+      const panelId = link.closest("article.panel")?.getAttribute("aria-labelledby")?.replace(/^project-/, "");
+      openForm(PROPERTIES.find((p) => p.id === panelId)?.name);
+    };
+    window.addEventListener("click", onClick, true);
+    return () => window.removeEventListener("click", onClick, true);
+  }, [openForm]);
+
+  // Back (and Forward) close and reopen the pop-up.
+  useEffect(() => {
+    const onPop = () => setOpen(historyFlagged());
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  // Keep the <dialog> in step with `open`, and pause the page behind it.
+  useEffect(() => {
+    const d = dialogRef.current;
+    if (!d) return;
+    if (open && !d.open) {
+      d.showModal();
+      document.documentElement.classList.add("rsvp-open");
+      window.dispatchEvent(new Event(SCROLL_LOCK));
+    } else if (!open && d.open) {
+      d.close();
     }
-    lastView.current = view;
-  }, [step, screen]);
+  }, [open]);
+
+  useEffect(() => {
+    const d = dialogRef.current;
+    if (!d) return;
+    const onCancel = (e: Event) => {
+      // Escape, or the Android back gesture: close through history like the X button.
+      e.preventDefault();
+      closeForm();
+    };
+    const onClose = () => {
+      document.documentElement.classList.remove("rsvp-open");
+      window.dispatchEvent(new Event(SCROLL_UNLOCK));
+      setOpen(false);
+      // If the browser closed the dialog itself, drop the history entry too.
+      if (historyFlagged()) window.history.back();
+    };
+    d.addEventListener("cancel", onCancel);
+    d.addEventListener("close", onClose);
+    return () => {
+      d.removeEventListener("cancel", onCancel);
+      d.removeEventListener("close", onClose);
+      if (d.open) {
+        document.documentElement.classList.remove("rsvp-open");
+        window.dispatchEvent(new Event(SCROLL_UNLOCK));
+      }
+    };
+  }, [closeForm]);
+
+  // On opening and on every new screen: start at the top, and move focus to the
+  // heading (not an input, so phones don't pop the keyboard up unasked).
+  useEffect(() => {
+    if (!open) return;
+    if (bodyRef.current) bodyRef.current.scrollTop = 0;
+    headings.current[view]?.focus({ preventScroll: true });
+  }, [open, view]);
 
   const clearError = (key: keyof RegistrationInput) => () => {
     setErrors((e) => (e[key] ? { ...e, [key]: undefined } : e));
@@ -157,43 +273,42 @@ export default function Register() {
     const params = new URLSearchParams(window.location.search);
     const raw: Record<string, unknown> = Object.fromEntries(fd.entries());
     raw.consent = fd.get("consent") === "on";
+    raw.project = project;
     raw.utmSource = params.get("utm_source") || "";
     raw.utmMedium = params.get("utm_medium") || "";
     raw.utmCampaign = params.get("utm_campaign") || "";
     return { data: normalise(raw), company: fd.get("company") || "" };
   }
 
-  function onContinue() {
-    if (!formRef.current) return;
-    setAlert("");
-    const { data } = collect(formRef.current);
-    const found = validate(data, STEP_ONE);
+  function showErrors(found: FieldErrors) {
     setErrors(found);
-    if (Object.keys(found).length) {
-      setAlert("Check the highlighted fields.");
-      document.getElementById(`f-${Object.keys(found)[0]}`)?.focus();
-      return;
-    }
-    setScreen("goals");
+    const first = SCREEN_ORDER.flatMap((s) => SCREENS[s] as readonly (keyof RegistrationInput)[]).find((k) => found[k]);
+    if (!first) return;
+    const where = SCREEN_ORDER.find((s) => (SCREENS[s] as readonly string[]).includes(first));
+    if (where && where !== screen) setScreen(where);
+    window.setTimeout(() => focusField(first), 0);
   }
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (sending) return;
-    if (screen === "seat") {
-      onContinue();
+    setAlert("");
+    const { data, company } = collect(e.currentTarget);
+
+    if (screen !== "ready") {
+      const found = validate(data, SCREENS[screen]);
+      if (Object.keys(found).length) {
+        showErrors(found);
+        return;
+      }
+      setErrors({});
+      setScreen(SCREEN_ORDER[SCREEN_ORDER.indexOf(screen) + 1]);
       return;
     }
-    setAlert("");
 
-    const { data, company } = collect(e.currentTarget);
     const found = validate(data);
-    setErrors(found);
     if (Object.keys(found).length) {
-      setAlert("Check the highlighted fields.");
-      const first = Object.keys(found)[0] as keyof RegistrationInput;
-      if (STEP_ONE.includes(first)) setScreen("seat");
-      window.setTimeout(() => document.getElementById(`f-${first}`)?.focus(), 0);
+      showErrors(found);
       return;
     }
 
@@ -206,11 +321,11 @@ export default function Register() {
       });
       const out = await res.json().catch(() => ({}));
       if (!res.ok || !out.ok) {
-        if (out.errors) setErrors(out.errors);
-        setAlert(out.error || "We couldn’t save your registration. Try again in a moment.");
+        if (out.errors && Object.keys(out.errors).length) showErrors(out.errors);
+        else setAlert(out.error || "We couldn’t save your registration. Try again in a moment.");
         return;
       }
-      const record: Saved = { id: out.id, firstName: data.fullName.split(" ")[0], joined: false, day: data.day };
+      const record: Saved = { id: out.id, firstName: data.fullName.split(" ")[0], joined: false };
       writeSaved(record);
       setSaved(record);
       setStep("community");
@@ -219,6 +334,12 @@ export default function Register() {
     } finally {
       setSending(false);
     }
+  }
+
+  function back() {
+    setAlert("");
+    setErrors({});
+    setScreen(SCREEN_ORDER[Math.max(0, SCREEN_ORDER.indexOf(screen) - 1)]);
   }
 
   function onJoin() {
@@ -242,17 +363,24 @@ export default function Register() {
     setSaved(null);
     setErrors({});
     setAlert("");
-    setScreen("seat");
+    setBudget("");
+    setScreen("details");
     setStep("form");
   }
 
-  const current = step === "form" ? screen : step;
-  const stepState = (s: Screen | Step) => {
-    const order = ["seat", "goals", "community", "done"];
-    const i = order.indexOf(s);
-    const cur = order.indexOf(current);
-    return i < cur ? "done" : i === cur ? "current" : "next";
-  };
+  const stage = SCREEN_ORDER.indexOf(screen);
+  // One stable callback per heading, so React only calls it when the heading
+  // mounts or unmounts, never on a re-render (which would steal focus from a field).
+  const headingCallbacks = useRef<Record<string, (el: HTMLElement | null) => void>>({});
+  const headingRef = (key: string) =>
+    (headingCallbacks.current[key] ??= (el: HTMLElement | null) => {
+      headings.current[key] = el;
+      // The community and pass views appear after the previous view has faded
+      // out, so focus them as they arrive.
+      if (el && (key === "community" || key === "done") && dialogRef.current?.open) {
+        el.focus({ preventScroll: true });
+      }
+    });
 
   return (
     <section className="register" id="register" aria-labelledby="register-heading">
@@ -261,7 +389,8 @@ export default function Register() {
           <p className="eyebrow">Free entry, registered guests only</p>
           <RevealText id="register-heading" className="heading" lines={["Reserve", "your seat"]} />
           <p className="register__lead serif-line">
-            Two short screens. Event updates and directions are shared in the roadshow WhatsApp community.
+            Your details and three quick questions. Event updates and directions are shared in the roadshow WhatsApp
+            community.
           </p>
           <dl className="details">
             <div className="details__row">
@@ -295,282 +424,379 @@ export default function Register() {
           </p>
         </aside>
 
-        <div className="card">
-          <ol className="steps" aria-label="Registration progress">
-            <li data-state={stepState("seat")}>Your seat</li>
-            <li data-state={stepState("goals")}>Your goals</li>
-            <li data-state={stepState("community")}>Community</li>
-            <li data-state={stepState("done")}>Your pass</li>
-          </ol>
-
-          <AnimatePresence mode="wait" initial={false}>
-            {step === "form" && (
-              <motion.div
-                key="form"
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.45, ease: EASE }}
-              >
-                <h3 ref={headingRef} tabIndex={-1} className="sr-only">
-                  {screen === "seat" ? "Your seat" : "Your goals"}
-                </h3>
-                <form ref={formRef} className="form" noValidate onSubmit={onSubmit}>
-                  <div className="form__screen" hidden={screen !== "seat"}>
-                    <Field name="fullName" label="Full name" error={errors.fullName}>
-                      <input
-                        id="f-fullName"
-                        name="fullName"
-                        className="field__control"
-                        autoComplete="name"
-                        placeholder="As on your ID"
-                        required
-                        aria-invalid={!!errors.fullName}
-                        aria-describedby={errors.fullName ? "f-fullName-error" : undefined}
-                        onChange={clearError("fullName")}
-                      />
-                    </Field>
-                    <Field name="phone" label="WhatsApp number" error={errors.phone}>
-                      <input
-                        id="f-phone"
-                        name="phone"
-                        type="tel"
-                        inputMode="tel"
-                        className="field__control"
-                        autoComplete="tel"
-                        placeholder="+234 803 123 4567"
-                        required
-                        aria-invalid={!!errors.phone}
-                        aria-describedby={errors.phone ? "f-phone-error" : undefined}
-                        onChange={clearError("phone")}
-                      />
-                    </Field>
-                    <Field name="email" label="Email" error={errors.email}>
-                      <input
-                        id="f-email"
-                        name="email"
-                        type="email"
-                        inputMode="email"
-                        className="field__control"
-                        autoComplete="email"
-                        placeholder="name@example.com"
-                        required
-                        aria-invalid={!!errors.email}
-                        aria-describedby={errors.email ? "f-email-error" : undefined}
-                        onChange={clearError("email")}
-                      />
-                    </Field>
-                    <Field name="city" label="City and country you live in" error={errors.city}>
-                      <input
-                        id="f-city"
-                        name="city"
-                        className="field__control"
-                        autoComplete="address-level2"
-                        placeholder="e.g. Lagos, Nigeria"
-                        required
-                        aria-invalid={!!errors.city}
-                        aria-describedby={errors.city ? "f-city-error" : undefined}
-                        onChange={clearError("city")}
-                      />
-                    </Field>
-                    <Field name="day" label="Which day will you attend?" error={errors.day} full>
-                      <Select
-                        name="day"
-                        options={EVENT.days.map((d) => d.value)}
-                        placeholder="Choose a day"
-                        error={errors.day}
-                        onChange={clearError("day")}
-                      />
-                    </Field>
-                  </div>
-
-                  <div className="form__screen" hidden={screen !== "goals"}>
-                    <Field name="interest" label="Project you’re most interested in" error={errors.interest} full>
-                      <Select name="interest" options={INTERESTS} placeholder="Choose a project" error={errors.interest} onChange={clearError("interest")} />
-                    </Field>
-                    <Field name="budget" label="Budget" error={errors.budget} full>
-                      <Select name="budget" options={BUDGETS} placeholder="Choose a budget" error={errors.budget} onChange={clearError("budget")} />
-                    </Field>
-                    <Field name="goal" label="Main goal" error={errors.goal}>
-                      <Select name="goal" options={GOALS} placeholder="Choose a goal" error={errors.goal} onChange={clearError("goal")} />
-                    </Field>
-                    <Field name="unitType" label="Home type" error={errors.unitType}>
-                      <Select name="unitType" options={UNIT_TYPES} placeholder="Choose a home type" error={errors.unitType} onChange={clearError("unitType")} />
-                    </Field>
-                    <Field name="payment" label="How would you prefer to pay?" error={errors.payment}>
-                      <Select name="payment" options={PAYMENT} placeholder="Choose one" error={errors.payment} onChange={clearError("payment")} />
-                    </Field>
-                    <Field name="timeline" label="When are you looking to buy?" error={errors.timeline}>
-                      <Select name="timeline" options={TIMELINES} placeholder="Choose a timeline" error={errors.timeline} onChange={clearError("timeline")} />
-                    </Field>
-                    <Field name="experience" label="Have you bought in Dubai before?" error={errors.experience}>
-                      <Select name="experience" options={EXPERIENCE} placeholder="Choose one" error={errors.experience} onChange={clearError("experience")} />
-                    </Field>
-                    <Field name="guests" label="Who’s attending" error={errors.guests}>
-                      <Select name="guests" options={GUESTS} placeholder="Number of people" error={errors.guests} onChange={clearError("guests")} />
-                    </Field>
-
-                    <div className="field field--full" data-invalid={errors.consent ? "true" : undefined}>
-                      <label className="check">
-                        <input id="f-consent" type="checkbox" name="consent" onChange={clearError("consent")} />
-                        <span>
-                          I agree to be contacted by {dataHolders()} about the roadshow and its projects, and
-                          accept the{" "}
-                          <a href="https://danubeproperties.com/terms-conditions/" target="_blank" rel="noopener noreferrer">
-                            terms and conditions
-                          </a>
-                          .
-                        </span>
-                      </label>
-                      {errors.consent && (
-                        <span className="field__error" role="alert">
-                          {errors.consent}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="honeypot" aria-hidden="true">
-                    <label htmlFor="f-company">Company</label>
-                    <input id="f-company" name="company" tabIndex={-1} autoComplete="off" />
-                  </div>
-
-                  {alert && (
-                    <p className="form__alert" role="alert">
-                      {alert}
-                    </p>
-                  )}
-
-                  <div className="form__submit">
-                    <p className="micro">
-                      {screen === "seat"
-                        ? `Free entry. About ${EVENT.dailyCapacity} seats a day, registered guests first.`
-                        : "Last screen. This helps your advisor prepare the right homes and numbers for you."}
-                    </p>
-                    <div className="form__buttons">
-                      {screen === "goals" && (
-                        <button type="button" className="btn form__back" onClick={() => setScreen("seat")}>
-                          Back
-                        </button>
-                      )}
-                      <button className="btn btn--solid" type="submit" disabled={sending}>
-                        {sending ? (
-                          <>
-                            <span className="spinner" aria-hidden="true" />
-                            Reserving
-                          </>
-                        ) : screen === "seat" ? (
-                          "Reserve my seat"
-                        ) : (
-                          "Confirm my seat"
-                        )}
-                      </button>
-                    </div>
-                    <div className="form__note">
-                      <p>Takes under a minute. No payment, no obligation to buy.</p>
-                      <p>
-                        Your details go only to {dataHolders()}, never to third parties.
-                      </p>
-                      <p>Can’t make it? Choose ‘Either day’ and we’ll send the price list on WhatsApp.</p>
-                    </div>
-                  </div>
-                </form>
-              </motion.div>
-            )}
-
-            {step === "community" && saved && (
-              <motion.div
-                key="community"
-                className="gate"
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.45, ease: EASE }}
-              >
-                <h3 ref={headingRef} tabIndex={-1}>
-                  One last step, {saved.firstName}: join the community
-                </h3>
-                <p>
-                  Your details are saved. Your seat is confirmed once you join the Danube Roadshow WhatsApp
-                  community, where all event information is shared.
-                </p>
-                <ul className="gate__list">
-                  <li>Venue, date and directions</li>
-                  <li>Reminders before the doors open</li>
-                  <li>New launch and payment plan announcements</li>
-                </ul>
-                <div className="gate__actions">
-                  <a
-                    className="btn btn--whatsapp"
-                    href={COMMUNITY_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={onJoin}
-                  >
-                    <WhatsAppIcon />
-                    Join the WhatsApp community
-                  </a>
-                </div>
-              </motion.div>
-            )}
-
-            {step === "done" && saved && (
-              <motion.div
-                key="done"
-                className="pass"
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.45, ease: EASE }}
-              >
-                <h3 ref={headingRef} tabIndex={-1}>
-                  You’re registered, {saved.firstName}
-                </h3>
-                <p>Show this pass at the registration desk. A screenshot is fine.</p>
-                <div className="pass__ticket">
-                  <div className="pass__ticket-head">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/media/logo.png" alt="Danube Properties" width={373} height={20} />
-                    <span className="pass__id">{saved.id}</span>
-                  </div>
-                  <dl className="details">
-                    <div className="details__row">
-                      <dt>Event</dt>
-                      <dd>{EVENT.title}</dd>
-                    </div>
-                    <div className="details__row">
-                      <dt>Your day</dt>
-                      <dd>{passDay(saved.day)}</dd>
-                    </div>
-                    <div className="details__row">
-                      <dt>Venue</dt>
-                      <dd>
-                        {EVENT.venue}, {EVENT.city}
-                      </dd>
-                    </div>
-                  </dl>
-                </div>
-                <div className="pass__actions">
-                  <a className="btn" href={COMMUNITY_URL} target="_blank" rel="noopener noreferrer">
-                    Open the community
-                  </a>
-                  <a
-                    className="text-link"
-                    href={whatsappLink(`Hello Danube team, I’ve registered for the Roadshow (ID ${saved.id}) and have a question.`)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Message the sales team
-                  </a>
-                  <button type="button" className="text-link text-button" onClick={reset}>
-                    Register another guest
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+        <div className="card register__cta">
+          {!saved ? (
+            <>
+              <h3>Three quick questions, then your seat is reserved</h3>
+              <p>It takes under a minute. No payment, no obligation to buy.</p>
+              <button type="button" className="btn btn--solid" onClick={() => openForm()}>
+                Reserve my seat
+              </button>
+            </>
+          ) : !saved.joined ? (
+            <>
+              <h3>One last step, {saved.firstName}</h3>
+              <p>Your details are saved. Join the WhatsApp community to confirm your seat.</p>
+              <button type="button" className="btn btn--whatsapp" onClick={() => openForm()}>
+                <WhatsAppIcon />
+                Join the community
+              </button>
+            </>
+          ) : (
+            <>
+              <h3>You’re registered, {saved.firstName}</h3>
+              <p>Your pass is saved on this device. Show it at the registration desk.</p>
+              <div className="register__cta-actions">
+                <button type="button" className="btn btn--solid" onClick={() => openForm()}>
+                  Show my pass
+                </button>
+                <button
+                  type="button"
+                  className="text-link text-button"
+                  onClick={() => {
+                    reset();
+                    openForm();
+                  }}
+                >
+                  Register another guest
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
+
+      <dialog
+        ref={dialogRef}
+        className="rsvp"
+        aria-labelledby={`rsvp-h-${view}`}
+        data-lenis-prevent
+        onPointerDown={(e) => {
+          pressedOnBackdrop.current = e.target === e.currentTarget;
+        }}
+        onClick={(e) => {
+          // Only a press that starts and ends outside the panel closes it, so
+          // selecting text in a field and releasing outside never does.
+          if (e.target === e.currentTarget && pressedOnBackdrop.current) closeForm();
+          pressedOnBackdrop.current = false;
+        }}
+      >
+        <div className="rsvp__panel">
+          <div className="rsvp__top">
+            {step === "form" ? (
+              <div className="rsvp__progress">
+                <span className="rsvp__count">{SCREEN_LABEL[screen]}</span>
+                <ol className="rsvp__bar" aria-hidden="true">
+                  {SCREEN_ORDER.map((s, i) => (
+                    <li key={s} data-state={i < stage ? "done" : i === stage ? "current" : "next"} />
+                  ))}
+                </ol>
+              </div>
+            ) : (
+              <span className="rsvp__count">{step === "community" ? "Last step" : "Your pass"}</span>
+            )}
+            <button type="button" className="rsvp__close" onClick={closeForm} aria-label="Close">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 6l12 12M18 6L6 18" />
+              </svg>
+            </button>
+          </div>
+
+          <div className="rsvp__body" ref={bodyRef}>
+            <AnimatePresence mode="wait" initial={false}>
+              {step === "form" && (
+                <motion.div
+                  key="form"
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.45, ease: EASE }}
+                >
+                  <form ref={formRef} className="form" noValidate onSubmit={onSubmit}>
+                    <div className="form__screen" hidden={screen !== "details"}>
+                      <div className="field--full rsvp__intro">
+                        <h2 id="rsvp-h-details" ref={headingRef("details")} tabIndex={-1} className="rsvp__q">
+                          Reserve your seat
+                        </h2>
+                        <p className="rsvp__hint">Free entry. About {EVENT.dailyCapacity} seats a day, registered guests first.</p>
+                      </div>
+                      <Field name="fullName" label="Full name" error={errors.fullName} full>
+                        <input
+                          id="f-fullName"
+                          name="fullName"
+                          className="field__control"
+                          autoComplete="name"
+                          placeholder="As on your ID"
+                          required
+                          aria-invalid={!!errors.fullName}
+                          aria-describedby={errors.fullName ? "f-fullName-error" : undefined}
+                          onChange={clearError("fullName")}
+                        />
+                      </Field>
+                      <Field name="phone" label="WhatsApp number" error={errors.phone}>
+                        <input
+                          id="f-phone"
+                          name="phone"
+                          type="tel"
+                          inputMode="tel"
+                          className="field__control"
+                          autoComplete="tel"
+                          placeholder="+234 803 123 4567"
+                          required
+                          aria-invalid={!!errors.phone}
+                          aria-describedby={errors.phone ? "f-phone-error" : undefined}
+                          onChange={clearError("phone")}
+                        />
+                      </Field>
+                      <Field name="email" label="Email" error={errors.email}>
+                        <input
+                          id="f-email"
+                          name="email"
+                          type="email"
+                          inputMode="email"
+                          className="field__control"
+                          autoComplete="email"
+                          placeholder="name@example.com"
+                          required
+                          aria-invalid={!!errors.email}
+                          aria-describedby={errors.email ? "f-email-error" : undefined}
+                          onChange={clearError("email")}
+                        />
+                      </Field>
+                      <Choices
+                        name="location"
+                        label="Where do you live?"
+                        options={LOCATIONS}
+                        error={errors.location}
+                        compact
+                        onPick={() => clearError("location")()}
+                      />
+                    </div>
+
+                    <div className="form__screen" hidden={screen !== "budget"}>
+                      <h2 id="rsvp-h-budget" ref={headingRef("budget")} tabIndex={-1} className="rsvp__q field--full">
+                        How much are you ready to invest?
+                      </h2>
+                      <Choices
+                        name="budget"
+                        options={BUDGETS}
+                        labelledBy="rsvp-h-budget"
+                        error={errors.budget}
+                        onPick={(v) => {
+                          setBudget(v);
+                          clearError("budget")();
+                          if (v !== BUDGET_OTHER) clearError("budgetOther")();
+                        }}
+                      />
+                      {budget === BUDGET_OTHER && (
+                        <Field name="budgetOther" label="Your amount in US dollars" error={errors.budgetOther} full>
+                          <input
+                            id="f-budgetOther"
+                            name="budgetOther"
+                            className="field__control"
+                            inputMode="text"
+                            autoComplete="off"
+                            placeholder="e.g. $750k"
+                            maxLength={60}
+                            aria-invalid={!!errors.budgetOther}
+                            aria-describedby={errors.budgetOther ? "f-budgetOther-error" : undefined}
+                            onChange={clearError("budgetOther")}
+                          />
+                        </Field>
+                      )}
+                    </div>
+
+                    <div className="form__screen" hidden={screen !== "buying"}>
+                      <h2 id="rsvp-h-buying" ref={headingRef("buying")} tabIndex={-1} className="rsvp__q field--full">
+                        How would you like to buy?
+                      </h2>
+                      <Choices
+                        name="buying"
+                        options={BUYING}
+                        labelledBy="rsvp-h-buying"
+                        error={errors.buying}
+                        onPick={() => clearError("buying")()}
+                      />
+                    </div>
+
+                    <div className="form__screen" hidden={screen !== "ready"}>
+                      <h2 id="rsvp-h-ready" ref={headingRef("ready")} tabIndex={-1} className="rsvp__q field--full">
+                        If we find a home that matches your budget and goals, would you reserve it?
+                      </h2>
+                      <Choices
+                        name="ready"
+                        options={READY}
+                        labelledBy="rsvp-h-ready"
+                        error={errors.ready}
+                        onPick={() => clearError("ready")()}
+                      />
+                      <div className="field field--full" data-invalid={errors.consent ? "true" : undefined}>
+                        <label className="check">
+                          <input
+                            id="f-consent"
+                            type="checkbox"
+                            name="consent"
+                            aria-invalid={!!errors.consent}
+                            aria-describedby={errors.consent ? "f-consent-error" : undefined}
+                            onChange={clearError("consent")}
+                          />
+                          <span>
+                            I agree to be contacted by {dataHolders()} about the roadshow and its projects, and
+                            accept the{" "}
+                            <a href="https://danubeproperties.com/terms-conditions/" target="_blank" rel="noopener noreferrer">
+                              terms and conditions
+                            </a>
+                            .
+                          </span>
+                        </label>
+                        {errors.consent && (
+                          <span className="field__error" id="f-consent-error" role="alert">
+                            {errors.consent}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="honeypot" aria-hidden="true">
+                      <label htmlFor="f-company">Company</label>
+                      <input id="f-company" name="company" tabIndex={-1} autoComplete="off" />
+                    </div>
+
+                    {message && (
+                      <p className="form__alert" role="alert">
+                        {message}
+                      </p>
+                    )}
+
+                    <div className="form__submit">
+                      <div className="form__buttons">
+                        {screen !== "details" && (
+                          <button type="button" className="btn form__back" onClick={back}>
+                            Back
+                          </button>
+                        )}
+                        <button className="btn btn--solid" type="submit" disabled={sending}>
+                          {sending ? (
+                            <>
+                              <span className="spinner" aria-hidden="true" />
+                              Reserving
+                            </>
+                          ) : screen === "ready" ? (
+                            "Confirm my seat"
+                          ) : (
+                            "Continue"
+                          )}
+                        </button>
+                      </div>
+                      {screen === "ready" && (
+                        <div className="form__note">
+                          <p>No payment, no obligation to buy.</p>
+                          <p>Your details go only to {dataHolders()}, never to third parties.</p>
+                        </div>
+                      )}
+                    </div>
+                  </form>
+                </motion.div>
+              )}
+
+              {step === "community" && saved && (
+                <motion.div
+                  key="community"
+                  className="gate"
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.45, ease: EASE }}
+                >
+                  <h3 id="rsvp-h-community" ref={headingRef("community")} tabIndex={-1}>
+                    One last step, {saved.firstName}: join the community
+                  </h3>
+                  <p>
+                    Your details are saved. Your seat is confirmed once you join the Danube Roadshow WhatsApp
+                    community, where all event information is shared.
+                  </p>
+                  <ul className="gate__list">
+                    <li>Venue, date and directions</li>
+                    <li>Reminders before the doors open</li>
+                    <li>New launch and payment plan announcements</li>
+                  </ul>
+                  <div className="gate__actions">
+                    <a
+                      className="btn btn--whatsapp"
+                      href={COMMUNITY_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={onJoin}
+                    >
+                      <WhatsAppIcon />
+                      Join the WhatsApp community
+                    </a>
+                  </div>
+                </motion.div>
+              )}
+
+              {step === "done" && saved && (
+                <motion.div
+                  key="done"
+                  className="pass"
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.45, ease: EASE }}
+                >
+                  <h3 id="rsvp-h-done" ref={headingRef("done")} tabIndex={-1}>
+                    You’re registered, {saved.firstName}
+                  </h3>
+                  <p>Show this pass at the registration desk. A screenshot is fine.</p>
+                  <div className="pass__ticket">
+                    <div className="pass__ticket-head">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/media/logo.png" alt="Danube Properties" width={373} height={20} />
+                      <span className="pass__id">{saved.id}</span>
+                    </div>
+                    <dl className="details">
+                      <div className="details__row">
+                        <dt>Event</dt>
+                        <dd>{EVENT.title}</dd>
+                      </div>
+                      <div className="details__row">
+                        <dt>Dates</dt>
+                        <dd>{EVENT.dateLabel}</dd>
+                      </div>
+                      <div className="details__row">
+                        <dt>Doors</dt>
+                        <dd>{EVENT.timeLabel}</dd>
+                      </div>
+                      <div className="details__row">
+                        <dt>Venue</dt>
+                        <dd>
+                          {EVENT.venue}, {EVENT.city}
+                        </dd>
+                      </div>
+                    </dl>
+                  </div>
+                  <div className="pass__actions">
+                    <a className="btn" href={COMMUNITY_URL} target="_blank" rel="noopener noreferrer">
+                      Open the community
+                    </a>
+                    <a
+                      className="text-link"
+                      href={whatsappLink(`Hello Danube team, I’ve registered for the Roadshow (ID ${saved.id}) and have a question.`)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Message the sales team
+                    </a>
+                    <button type="button" className="text-link text-button" onClick={reset}>
+                      Register another guest
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      </dialog>
     </section>
   );
 }

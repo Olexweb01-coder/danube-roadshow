@@ -2661,3 +2661,346 @@ html:not(.js) .scroll-cue-wrap {
     bottom: calc(80px + env(safe-area-inset-bottom, 0px));
   }
 }
+
+/* ================================================================
+   Registration pop-up
+   One form for the whole page, opened by every "Reserve my seat" link.
+   Phones: full screen. Larger screens: a centred panel over the page.
+================================================================ */
+
+/* Section: the card now holds a single button that opens the pop-up. */
+.register__cta h3 {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.6vw, 2rem);
+  font-weight: 300;
+  line-height: 1.2;
+  max-width: 22ch;
+}
+.register__cta p {
+  margin: 1rem 0 1.75rem;
+  color: var(--mist);
+}
+.register__cta-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.5rem;
+}
+@media (max-width: 560px) {
+  .register__cta > .btn,
+  .register__cta-actions .btn {
+    width: 100%;
+  }
+}
+
+/* Page behind the pop-up stays put. */
+html.rsvp-open {
+  overflow: hidden;
+  scrollbar-gutter: stable;
+}
+
+.rsvp {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 2rem;
+  border: 0;
+  background: transparent;
+  color: var(--ivory);
+  overflow: hidden;
+}
+/* Anchored near the top, so moving between screens of different heights only
+   moves the bottom edge; the panel never jumps. */
+.rsvp[open] {
+  display: grid;
+  /* A fixed-height row, so the panel can never grow taller than the screen:
+     its middle section scrolls instead. */
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  place-items: start center;
+  padding-top: clamp(1rem, 8vh, 5rem);
+}
+.rsvp::backdrop {
+  background: rgba(6, 18, 48, 0.78);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.rsvp[open]::backdrop {
+  animation: rsvp-fade 0.35s var(--ease);
+}
+
+.rsvp__panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 620px;
+  max-height: 100%;
+  background: var(--harbour);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+}
+.rsvp[open] .rsvp__panel {
+  animation: rsvp-in 0.5s var(--ease);
+}
+@keyframes rsvp-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+@keyframes rsvp-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.rsvp__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 1rem 1rem 1rem clamp(1.25rem, 3.5vw, 2.25rem);
+  border-bottom: 1px solid var(--line);
+  flex: none;
+}
+.rsvp__progress {
+  display: grid;
+  gap: 0.55rem;
+  flex: 1;
+  max-width: 260px;
+}
+.rsvp__count {
+  font-size: 0.85rem;
+  color: var(--mist);
+}
+.rsvp__bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rsvp__bar li {
+  height: 2px;
+  background: var(--line);
+  transition: background-color 0.4s var(--ease);
+}
+.rsvp__bar li[data-state="done"] {
+  background: var(--ivory);
+}
+.rsvp__bar li[data-state="current"] {
+  background: var(--danube-red);
+}
+.rsvp__close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ivory);
+  cursor: pointer;
+  transition: border-color 0.3s var(--ease), background-color 0.3s var(--ease);
+}
+.rsvp__close svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+@media (hover: hover) {
+  .rsvp__close:hover {
+    border-color: var(--ivory);
+    background: rgba(255, 255, 255, 0.06);
+  }
+}
+
+.rsvp__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: clamp(1.5rem, 3.5vw, 2.25rem);
+}
+.rsvp [tabindex="-1"]:focus {
+  outline: none;
+}
+
+.rsvp__q {
+  margin: 0;
+  font-size: clamp(1.45rem, 3vw, 1.9rem);
+  font-weight: 300;
+  line-height: 1.2;
+  letter-spacing: 0.005em;
+  max-width: 28ch;
+}
+.rsvp__hint {
+  margin: 0.6rem 0 0;
+  font-size: 0.92rem;
+  color: var(--mist);
+}
+
+/* Each visible screen eases in as it appears. */
+.rsvp .form__screen:not([hidden]) {
+  animation: rsvp-screen 0.4s var(--ease);
+}
+@keyframes rsvp-screen {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+/* One-tap answers */
+.choices {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+.choices__legend {
+  padding: 0;
+  margin-bottom: 0.45rem;
+}
+.choices__list {
+  display: grid;
+  gap: 0.55rem;
+}
+.choices--compact .choices__list {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  min-height: 54px;
+  padding: 0.8rem 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: rgba(6, 18, 48, 0.55);
+  line-height: 1.35;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.3s var(--ease), background-color 0.3s var(--ease);
+}
+.choice input {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 0.3s var(--ease);
+}
+.choice input::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--danube-red);
+  transform: scale(0);
+  transition: transform 0.25s var(--ease);
+}
+.choice input:checked {
+  border-color: var(--ivory);
+}
+.choice input:checked::before {
+  transform: scale(1);
+}
+.choice input:focus-visible {
+  outline: 2px solid var(--danube-red);
+  outline-offset: 3px;
+}
+.choice:has(input:checked) {
+  border-color: var(--ivory);
+  background: rgba(255, 255, 255, 0.07);
+}
+@media (hover: hover) {
+  .choice:hover {
+    border-color: var(--line-strong);
+  }
+  .choice:has(input:checked):hover {
+    border-color: var(--ivory);
+  }
+}
+.choices[data-invalid="true"] .choice {
+  border-color: rgba(255, 138, 143, 0.55);
+}
+
+/* Inside the pop-up the screens are one column; the details screen keeps two. */
+.rsvp .form__screen {
+  grid-template-columns: 1fr;
+}
+.rsvp .form__screen:first-child {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.rsvp .form__submit {
+  margin-top: 0.75rem;
+}
+
+.rsvp .check {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Desktop custom cursor sits under the pop-up, so hand back the real one. */
+html.rsvp-open .cursor-ring,
+html.rsvp-open .cursor-dot {
+  display: none;
+}
+html.has-cursor .rsvp,
+html.has-cursor .rsvp * {
+  cursor: auto;
+}
+html.has-cursor .rsvp :is(a, button, label, .choice, .choice input) {
+  cursor: pointer;
+}
+
+/* Phones: full screen, buttons always within thumb reach. */
+@media (max-width: 640px) {
+  .rsvp,
+  .rsvp[open] {
+    padding: 0;
+  }
+  .rsvp[open] {
+    place-items: stretch;
+  }
+  .rsvp__panel {
+    max-width: none;
+    height: 100%;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .rsvp .form__screen:first-child {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-height: 560px) and (min-width: 641px) {
+  .rsvp,
+  .rsvp[open] {
+    padding: 1rem;
+  }
+}

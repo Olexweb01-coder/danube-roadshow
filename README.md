@@ -4,7 +4,7 @@ Next.js 15 landing page for the Danube Dubai Roadshow in Lagos (Saturday 12 and 
 13 December 2026). The page follows the conversion blueprint
 (`danube-roadshow-landing-page-blueprint.md`): hero, track record, belief reframe and
 benefits, delivery proof, projects with AED/USD pricing, reviews and investor stories,
-programme, seat value, FAQ, two-screen registration, WhatsApp community, pass.
+programme, seat value, FAQ, pop-up registration, WhatsApp community, pass.
 
 Registrations go to a Google Sheet, scored HOT, WARM or NURTURE. Guests must join the
 WhatsApp community to receive their pass. Each project has a WhatsApp enquiry button
@@ -35,7 +35,7 @@ refuses to submit until the sheet is connected.
 | What a seat includes | `src/components/SeatValue.tsx` |
 | FAQ | `src/components/Faq.tsx` |
 | The three projects: prices, handover, preset WhatsApp messages | `src/config/properties.ts` |
-| Form options (budgets, home types, timelines) | `src/lib/registration.ts` |
+| Form questions and answers, lead tier rules | `src/lib/registration.ts` |
 | Images and hero video | `public/media/` |
 
 Prices and handover dates were taken from danubeproperties.com in November 2026.
@@ -61,18 +61,21 @@ the stronger "Keys, not renders" caption.
 5. If you edit the script later: **Deploy → Manage deployments → Edit → New version**,
    so the URL stays the same.
 
-Each registration adds a row: date, registration ID, **lead tier**, name, phone, email,
-city, day attending, project, budget, home type, main goal, payment preference, Dubai
-experience, timeline, guests, consent, whether they joined the WhatsApp community (and
-when), ad source tags (`utm_source`, `utm_medium`, `utm_campaign` from the page link)
-and device.
+Each registration adds a row: date, registration ID, **lead tier**, name, WhatsApp number,
+email, where they live, how much they're ready to invest (and the amount they typed, if
+they chose "Other amount"), how they want to buy, whether they'd reserve, notes for the
+sales team, the project they opened the form from (if any), consent, whether they joined
+the WhatsApp community (and when), ad source tags (`utm_source`, `utm_medium`,
+`utm_campaign` from the page link) and device.
 
-**Lead tier** follows the proposal's on-ground sales strategy and is worked out on the
-server (`leadTier` in `src/lib/registration.ts`):
+**Lead tier** is worked out on the server (`leadTier` in `src/lib/registration.ts`):
 
-- **HOT:** buying within 90 days, with a budget from AED 2M or paying cash
-- **WARM:** buying within 90 days, or a budget from AED 2M
+- **HOT:** $350k or more, and would reserve a matching home
+- **WARM:** would reserve at any budget, or $350k or more and "possibly"
 - **NURTURE:** everyone else
+
+**Notes for sales** flags guests who want a completed home (the projects on show are
+off-plan) and guests who typed their own amount.
 
 If you already deployed the earlier version of the script, paste in the new `Code.gs`,
 then add a new sheet tab (or clear row 1) and run `setup` again so the headers match.
@@ -118,10 +121,11 @@ environment variables, and click **Deploy**. Vercel detects Next.js automaticall
   portrait cut loads on phones.
 - **Projects:** one sticky viewport where each project slides over the last
   (`Projects.tsx`). The scroll timeline is documented at the top of the file.
-- **Registration:** two screens in `Register.tsx` (seat details, then goals) →
-  `/api/register` → Apps Script. Tapping the
-  community button calls `/api/community`, which marks the row as joined. Progress is
-  kept in the browser, so a guest who leaves before joining returns to that step.
+- **Registration:** one pop-up form (`Register.tsx`), opened by every "Reserve my seat"
+  link on the page. Contact details, then three one-tap questions → `/api/register` →
+  Apps Script. The phone's Back button and Escape close it. Tapping the community button
+  calls `/api/community`, which marks the row as joined. Progress is kept in the browser,
+  so a guest who leaves before joining returns to that step.
 - **Spam:** a hidden field that bots fill in; those submissions are silently dropped.
 - **Reduced motion:** all scroll effects switch off and the projects become a plain
   list.

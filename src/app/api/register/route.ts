@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { leadTier, makeId, normalise, validate } from "@/lib/registration";
+import { leadNotes, leadTier, makeId, normalise, validate } from "@/lib/registration";
 import { sendToSheet } from "@/lib/sheets";
 
 export const runtime = "nodejs";
@@ -31,16 +31,13 @@ export async function POST(req: Request) {
     fullName: data.fullName,
     email: data.email,
     phone: data.phone,
-    city: data.city,
-    day: data.day,
-    interest: data.interest,
+    location: data.location,
     budget: data.budget,
-    unitType: data.unitType,
-    goal: data.goal,
-    payment: data.payment,
-    experience: data.experience,
-    timeline: data.timeline,
-    guests: data.guests,
+    budgetOther: data.budgetOther,
+    buying: data.buying,
+    ready: data.ready,
+    notes: leadNotes(data),
+    project: data.project,
     consent: data.consent ? "Yes" : "No",
     tier: leadTier(data),
     utmSource: data.utmSource,

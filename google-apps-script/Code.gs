@@ -19,9 +19,9 @@ var SECRET = "change-me-to-a-long-random-string";
 var SHEET_NAME = "Registrations";
 
 var HEADERS = [
-  "Registered at", "Registration ID", "Lead tier", "Full name", "Phone", "Email", "City",
-  "Day attending", "Project of interest", "Budget", "Home type", "Main goal", "Payment preference",
-  "Bought in Dubai before", "Timeline", "Guests", "Consent",
+  "Registered at", "Registration ID", "Lead tier", "Full name", "Phone", "Email", "Lives in",
+  "Ready to invest", "Amount typed", "How they want to buy", "Ready to reserve", "Notes for sales",
+  "Opened from project", "Consent",
   "Joined WhatsApp community", "Community joined at",
   "UTM source", "UTM medium", "UTM campaign", "Device",
 ];
@@ -72,9 +72,8 @@ function doPost(e) {
       sheet.appendRow([
         Utilities.formatDate(new Date(body.timestamp || new Date()), tz, "yyyy-MM-dd HH:mm:ss"),
         safe_(body.id), safe_(body.tier), safe_(body.fullName), safe_(body.phone), safe_(body.email),
-        safe_(body.city), safe_(body.day), safe_(body.interest), safe_(body.budget), safe_(body.unitType),
-        safe_(body.goal), safe_(body.payment), safe_(body.experience), safe_(body.timeline),
-        safe_(body.guests), safe_(body.consent), "No", "",
+        safe_(body.location), safe_(body.budget), safe_(body.budgetOther), safe_(body.buying), safe_(body.ready),
+        safe_(body.notes), safe_(body.project), safe_(body.consent), "No", "",
         safe_(body.utmSource), safe_(body.utmMedium), safe_(body.utmCampaign), safe_(body.userAgent),
       ]);
       return json_({ ok: true });
