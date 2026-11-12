@@ -8,6 +8,9 @@ import {
   BUDGETS,
   BUDGET_OTHER,
   BUYING,
+  HEARD_FRIEND,
+  HEARD_FROM,
+  HEARD_OTHER,
   LOCATIONS,
   READY,
   SCREENS,
@@ -155,6 +158,7 @@ export default function Register() {
   const [alert, setAlert] = useState("");
   const [sending, setSending] = useState(false);
   const [budget, setBudget] = useState("");
+  const [heard, setHeard] = useState("");
   const [project, setProject] = useState("");
   const dialogRef = useRef<HTMLDialogElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -364,6 +368,7 @@ export default function Register() {
     setErrors({});
     setAlert("");
     setBudget("");
+    setHeard("");
     setScreen("details");
     setStep("form");
   }
@@ -571,6 +576,39 @@ export default function Register() {
                         compact
                         onPick={() => clearError("location")()}
                       />
+                      <Choices
+                        name="heardFrom"
+                        label="How did you hear about the roadshow?"
+                        options={HEARD_FROM}
+                        error={errors.heardFrom}
+                        compact
+                        onPick={(v) => {
+                          setHeard(v);
+                          clearError("heardFrom")();
+                          clearError("heardDetail")();
+                        }}
+                      />
+                      {(heard === HEARD_FRIEND || heard === HEARD_OTHER) && (
+                        <Field
+                          name="heardDetail"
+                          label={heard === HEARD_FRIEND ? "Your friend’s name" : "Where did you hear about it?"}
+                          error={errors.heardDetail}
+                          full
+                        >
+                          <input
+                            key={heard}
+                            id="f-heardDetail"
+                            name="heardDetail"
+                            className="field__control"
+                            autoComplete="off"
+                            placeholder={heard === HEARD_FRIEND ? "Their full name" : "e.g. a radio advert, a church event"}
+                            maxLength={80}
+                            aria-invalid={!!errors.heardDetail}
+                            aria-describedby={errors.heardDetail ? "f-heardDetail-error" : undefined}
+                            onChange={clearError("heardDetail")}
+                          />
+                        </Field>
+                      )}
                     </div>
 
                     <div className="form__screen" hidden={screen !== "budget"}>

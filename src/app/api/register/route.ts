@@ -32,6 +32,8 @@ export async function POST(req: Request) {
     email: data.email,
     phone: data.phone,
     location: data.location,
+    heardFrom: data.heardFrom,
+    heardDetail: data.heardDetail,
     budget: data.budget,
     budgetOther: data.budgetOther,
     buying: data.buying,

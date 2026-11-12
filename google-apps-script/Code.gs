@@ -24,6 +24,7 @@ var HEADERS = [
   "Opened from project", "Consent",
   "Joined WhatsApp community", "Community joined at",
   "UTM source", "UTM medium", "UTM campaign", "Device",
+  "Heard about it from", "Friend's name or other source",
 ];
 // 1-based column of "Joined WhatsApp community".
 var JOINED_COL = HEADERS.indexOf("Joined WhatsApp community") + 1;
@@ -75,6 +76,7 @@ function doPost(e) {
         safe_(body.location), safe_(body.budget), safe_(body.budgetOther), safe_(body.buying), safe_(body.ready),
         safe_(body.notes), safe_(body.project), safe_(body.consent), "No", "",
         safe_(body.utmSource), safe_(body.utmMedium), safe_(body.utmCampaign), safe_(body.userAgent),
+        safe_(body.heardFrom), safe_(body.heardDetail),
       ]);
       return json_({ ok: true });
     }
