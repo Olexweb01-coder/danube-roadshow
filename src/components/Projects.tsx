@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { PROPERTIES, type Property } from "@/config/properties";
 import { usd, whatsappLink } from "@/config/event";
 import { useReducedMotionSafe } from "@/lib/useReducedMotionSafe";
+import { withBase } from "@/lib/basePath";
 import { WhatsAppIcon } from "./Icons";
 import RevealText from "./motion/RevealText";
 
@@ -162,7 +163,7 @@ function Panel({
     >
       <motion.div className="panel__media" style={{ scale: mediaScale, y: mediaY }} data-cursor="view">
         <Image
-          src={p.image}
+          src={withBase(p.image)}
           alt={`${p.name} by Danube, ${p.location}`}
           fill
           sizes="100vw"
@@ -184,7 +185,7 @@ function StaticPanel({ p, index }: { p: Property; index: number }) {
   return (
     <article className="panel" aria-labelledby={`project-${p.id}`}>
       <div className="panel__media">
-        <Image src={p.image} alt={`${p.name} by Danube, ${p.location}`} fill sizes="100vw" priority={index === 0} />
+        <Image src={withBase(p.image)} alt={`${p.name} by Danube, ${p.location}`} fill sizes="100vw" priority={index === 0} />
       </div>
       <div className="panel__shade" />
       <span id={`project-${p.id}`} className="sr-only">

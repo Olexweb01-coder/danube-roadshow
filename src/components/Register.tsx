@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { BROKER, COMMUNITY_URL, EVENT, dataHolders, whatsappLink } from "@/config/event";
 import { PROPERTIES } from "@/config/properties";
+import { withBase } from "@/lib/basePath";
 import {
   BUDGETS,
   BUDGET_OTHER,
@@ -314,7 +315,7 @@ export default function Register() {
 
     setSending(true);
     try {
-      const res = await fetch("/api/register", {
+      const res = await fetch(withBase("/api/register"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...data, company }),
@@ -345,7 +346,7 @@ export default function Register() {
   function onJoin() {
     if (!saved) return;
     // Record the join in the sheet without delaying the WhatsApp tab.
-    fetch("/api/community", {
+    fetch(withBase("/api/community"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: saved.id }),
@@ -751,7 +752,7 @@ export default function Register() {
                   <div className="pass__ticket">
                     <div className="pass__ticket-head">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src="/media/logo.png" alt="Danube Properties" width={373} height={20} />
+                      <img src={withBase("/media/logo.png")} alt="Danube Properties" width={373} height={20} />
                       <span className="pass__id">{saved.id}</span>
                     </div>
                     <dl className="details">

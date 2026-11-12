@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { withBase } from "@/lib/basePath";
 
 const EASE = [0.77, 0, 0.18, 1] as const;
 
@@ -34,7 +35,7 @@ export default function WipeImage({
         viewport={{ once: true, margin: "0px 0px -10% 0px" }}
         transition={{ duration: 1.9, ease: [0.16, 1, 0.3, 1], delay }}
       >
-        <Image src={src} alt={alt} fill sizes={sizes} />
+        <Image src={withBase(src)} alt={alt} fill sizes={sizes} />
       </motion.div>
     </motion.div>
   );

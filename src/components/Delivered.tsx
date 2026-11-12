@@ -5,6 +5,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { DELIVERED, DELIVERY_CAPTION_REAL_PHOTOS, TRACK_RECORD } from "@/config/proof";
 import { useReducedMotionSafe } from "@/lib/useReducedMotionSafe";
+import { withBase } from "@/lib/basePath";
 import RevealText from "./motion/RevealText";
 
 const handedOver = Number(TRACK_RECORD.find((t) => /handed/i.test(t.label))?.value ?? DELIVERED.length);
@@ -75,7 +76,7 @@ export default function Delivered() {
       {DELIVERED.map((d, i) => (
         <figure key={d.name} className="gallery__card" data-cursor="view">
           <div className="gallery__img">
-            <Image src={d.image} alt={`${d.name} by Danube, ${d.area}`} fill sizes="(max-width: 760px) 80vw, 46vw" />
+            <Image src={withBase(d.image)} alt={`${d.name} by Danube, ${d.area}`} fill sizes="(max-width: 760px) 80vw, 46vw" />
           </div>
           <figcaption>
             <span className="gallery__index">{String(i + 1).padStart(2, "0")}</span>
