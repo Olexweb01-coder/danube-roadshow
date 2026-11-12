@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { EVENT } from "@/config/event";
 import { INTRO_DONE } from "@/lib/intro";
-import { withBase } from "@/lib/basePath";
 
 const KEY = "danube-intro-seen";
 /** How long the logo holds before the curtain lifts, counted from page start. */
@@ -63,7 +62,7 @@ export default function Intro() {
     <div className={`intro${lift ? " intro--lift" : ""}`} aria-hidden="true">
       <div className="intro__inner">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="intro__logo" src={withBase("/media/logo.png")} alt="" width={373} height={20} />
+        <img className="intro__logo" src="/media/logo.png" alt="" width={373} height={20} />
         <span className="intro__rule" />
         <span className="intro__line">
           {EVENT.city}, {EVENT.shortDate}

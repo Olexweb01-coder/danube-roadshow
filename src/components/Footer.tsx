@@ -1,5 +1,4 @@
 import { BROKER, brokerLabel } from "@/config/event";
-import { withBase } from "@/lib/basePath";
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -10,7 +9,7 @@ export default function Footer() {
         <div className="footer__top">
           <div className="footer__brand">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={withBase("/media/logo.png")} alt="Danube Properties" width={373} height={20} loading="lazy" />
+            <img src="/media/logo.png" alt="Danube Properties" width={373} height={20} loading="lazy" />
             <p>
               Presented by {brokerLabel()}
               {BROKER.name ? ", a registered Danube Properties broker" : ""}

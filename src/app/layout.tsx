@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { EVENT } from "@/config/event";
-import { withBase } from "@/lib/basePath";
 
 // Self-hosted (latin subset) so builds never depend on reaching Google Fonts.
 const jost = localFont({
@@ -31,11 +30,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: EVENT.title,
     description: "Three Danube addresses, one event. Register for your seat.",
-    images: [{ url: withBase("/media/hero-poster.jpg"), width: 1600, height: 900 }],
+    images: [{ url: "/media/hero-poster.jpg", width: 1600, height: 900 }],
     type: "website",
   },
   twitter: { card: "summary_large_image" },
-  icons: { icon: withBase("/favicon.svg") },
+  icons: { icon: "/favicon.svg" },
 };
 
 export const viewport: Viewport = {

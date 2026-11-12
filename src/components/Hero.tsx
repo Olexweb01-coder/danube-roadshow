@@ -5,7 +5,6 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { EVENT } from "@/config/event";
 import { useReducedMotionSafe } from "@/lib/useReducedMotionSafe";
 import { useIntroDone } from "@/lib/intro";
-import { withBase } from "@/lib/basePath";
 import Credential from "./Credential";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -75,7 +74,7 @@ export default function Hero() {
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 700px) and (orientation: portrait)");
-    const pick = () => setSrc(withBase(mq.matches ? "/media/hero-mobile.mp4" : "/media/hero.mp4"));
+    const pick = () => setSrc(mq.matches ? "/media/hero-mobile.mp4" : "/media/hero.mp4");
     pick();
     mq.addEventListener("change", pick);
     return () => mq.removeEventListener("change", pick);
@@ -110,7 +109,7 @@ export default function Hero() {
               ref={videoRef}
               className="hero__media"
               style={reduce ? undefined : { scale: mediaScale }}
-              poster={withBase("/media/hero-poster.jpg")}
+              poster="/media/hero-poster.jpg"
               muted
               loop
               playsInline

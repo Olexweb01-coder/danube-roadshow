@@ -4,7 +4,6 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import RevealText from "./motion/RevealText";
 import { NIGERIAN_TESTIMONIALS, PROCESS_SCREENSHOTS, REVIEWS } from "@/config/proof";
-import { withBase } from "@/lib/basePath";
 
 /**
  * Social proof blocks D (homeowner reviews), E (Nigerian investors) and
@@ -46,10 +45,10 @@ export default function SocialProof() {
               {NIGERIAN_TESTIMONIALS.map((t) => (
                 <li key={t.name} className="story">
                   {t.video ? (
-                    <video className="story__media" src={withBase(t.video)} poster={t.photo ? withBase(t.photo) : undefined} controls playsInline preload="none" />
+                    <video className="story__media" src={t.video} poster={t.photo} controls playsInline preload="none" />
                   ) : t.photo ? (
                     <div className="story__media">
-                      <Image src={withBase(t.photo)} alt={t.name} fill sizes="(max-width: 760px) 100vw, 33vw" />
+                      <Image src={t.photo} alt={t.name} fill sizes="(max-width: 760px) 100vw, 33vw" />
                     </div>
                   ) : null}
                   <p className="story__headline">“{t.headline}”</p>
@@ -83,7 +82,7 @@ export default function SocialProof() {
               {PROCESS_SCREENSHOTS.map((s) => (
                 <li key={s.image}>
                   <div className="paperwork__img">
-                    <Image src={withBase(s.image)} alt={s.caption} fill sizes="(max-width: 760px) 100vw, 33vw" />
+                    <Image src={s.image} alt={s.caption} fill sizes="(max-width: 760px) 100vw, 33vw" />
                   </div>
                   <p>{s.caption}</p>
                 </li>

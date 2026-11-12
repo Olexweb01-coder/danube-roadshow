@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { withBase } from "@/lib/basePath";
 import Countdown from "./Countdown";
 
 export default function Nav() {
@@ -19,7 +18,7 @@ export default function Nav() {
       <div className="container nav__inner">
         <a href="#top" className="nav__logo" aria-label="Danube Dubai Roadshow Lagos, back to top">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={withBase("/media/logo.png")} alt="Danube Properties" width={373} height={20} />
+          <img src="/media/logo.png" alt="Danube Properties" width={373} height={20} />
         </a>
         <nav className="nav__links" aria-label="Page sections">
           <a className="nav__link" href="#projects">Projects</a>
