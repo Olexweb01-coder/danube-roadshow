@@ -44,7 +44,7 @@ export const dataHolders = () =>
   BROKER.name ? `Danube Properties and ${BROKER.name}` : "Danube Properties and its registered broker";
 
 /** WhatsApp number that receives property enquiries (digits only, with country code). */
-export const ENQUIRY_WHATSAPP = "971585398610";
+export const ENQUIRY_WHATSAPP = "2349155354748";
 
 /** WhatsApp community invite link. Set NEXT_PUBLIC_WHATSAPP_COMMUNITY_URL in Vercel. */
 export const COMMUNITY_URL =
